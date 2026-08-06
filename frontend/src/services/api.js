@@ -72,24 +72,40 @@ const saveStoredGithubConfig = (config) => {
 
 // Resend Real Email Dispatcher
 const sendResendEmailOtp = async (email, otpCode) => {
-  // 1. First try backend proxy (server-to-server email dispatch - bypasses browser CORS!)
+  const resendApiKey = import.meta.env.VITE_RESEND_API_KEY || localStorage.getItem('shadowboard_resend_key') || DEFAULT_RESEND_KEY;
+  if (!resendApiKey) return false;
+
+  const targetEmail = 'edaramcharanreddy@gmail.com';
+
+  const bodyData = {
+    from: 'ShadowBoard Security <onboarding@resend.dev>',
+    to: [targetEmail],
+    subject: `🔒 Your 6-Digit ShadowBoard 2FA Verification Code: ${otpCode}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; padding: 24px; background: #030712; color: #ffffff; border-radius: 16px; border: 1px solid rgba(99, 102, 241, 0.3); max-width: 480px; margin: 0 auto;">
+        <h2 style="color: #38bdf8; font-size: 20px; font-weight: 800; margin-bottom: 4px;">SHADOWBOARD AI</h2>
+        <p style="color: #94a3b8; font-size: 12px; margin-bottom: 20px; font-family: monospace;">AUTONOMOUS EXECUTIVE BOARD 2FA VERIFICATION</p>
+        <p style="font-size: 14px; color: #cbd5e1; font-family: monospace;">Your 6-digit security verification OTP code is:</p>
+        <div style="background: #0f172a; padding: 18px; border-radius: 12px; font-size: 34px; font-weight: 900; font-family: monospace; letter-spacing: 8px; color: #38bdf8; text-align: center; border: 1px solid #334155; margin: 18px 0;">
+          ${otpCode}
+        </div>
+        <p style="color: #64748b; font-size: 11px; font-family: monospace;">This security code is valid for 10 minutes. Sent for ${email}.</p>
+      </div>
+    `
+  };
+
+  // Try server proxy first, then direct Resend API
   try {
     const res = await fetch(`${API_BASE}/auth/send-otp-email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email.trim(), otpCode })
+      body: JSON.stringify({ email: targetEmail, otpCode })
     });
     if (res.ok) {
-      console.log(`✅ [BACKEND EMAIL PROXY SUCCESS] Dispatched OTP email for ${email}`);
+      console.log(`✅ [BACKEND PROXY SUCCESS] Dispatched OTP email to ${targetEmail}`);
       return true;
     }
-  } catch (e) {
-    console.warn('Backend proxy notice:', e.message);
-  }
-
-  // 2. Direct Resend API Fallback
-  const resendApiKey = import.meta.env.VITE_RESEND_API_KEY || localStorage.getItem('shadowboard_resend_key') || DEFAULT_RESEND_KEY;
-  if (!resendApiKey) return false;
+  } catch (e) {}
 
   try {
     await fetch('https://api.resend.com/emails', {
@@ -98,26 +114,12 @@ const sendResendEmailOtp = async (email, otpCode) => {
         'Authorization': `Bearer ${resendApiKey}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        from: 'onboarding@resend.dev',
-        to: 'edaramcharanreddy@gmail.com',
-        subject: `🔒 Your 6-Digit ShadowBoard 2FA Verification Code: ${otpCode}`,
-        html: `
-          <div style="font-family: Arial, sans-serif; padding: 24px; background: #030712; color: #ffffff; border-radius: 16px; border: 1px solid rgba(99, 102, 241, 0.3); max-width: 480px; margin: 0 auto;">
-            <h2 style="color: #38bdf8; font-size: 20px; font-weight: 800; margin-bottom: 4px;">SHADOWBOARD AI</h2>
-            <p style="color: #94a3b8; font-size: 12px; margin-bottom: 20px; font-family: monospace;">AUTONOMOUS EXECUTIVE BOARD 2FA VERIFICATION</p>
-            <p style="font-size: 14px; color: #cbd5e1; font-family: monospace;">Your 6-digit security verification OTP code is:</p>
-            <div style="background: #0f172a; padding: 18px; border-radius: 12px; font-size: 34px; font-weight: 900; font-family: monospace; letter-spacing: 8px; color: #38bdf8; text-align: center; border: 1px solid #334155; margin: 18px 0;">
-              ${otpCode}
-            </div>
-            <p style="color: #64748b; font-size: 11px; font-family: monospace;">This security code is valid for 10 minutes. Requested for ${email}.</p>
-          </div>
-        `
-      })
+      body: JSON.stringify(bodyData)
     });
+    console.log(`✅ [RESEND DIRECT SUCCESS] Dispatched OTP email to ${targetEmail}`);
     return true;
   } catch (err) {
-    console.warn('Resend direct dispatch notice:', err.message);
+    console.warn('Resend dispatch notice:', err.message);
   }
   return false;
 };
@@ -235,14 +237,19 @@ export const api = {
   // Step 1 Real Email OTP Request (via Resend Email API & Supabase Auth)
   requestOtp: async (email, password) => {
     const users = getRegisteredUsers();
-    const user = users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
+    let user = users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
 
     if (!user) {
-      throw new Error('No account found with this email. Please click "Register Organization" to create an account.');
-    }
-
-    if (user.password && user.password !== password) {
-      throw new Error('Invalid password. Access key does not match your registered account.');
+      // Auto-register user seamlessly if first time entering credentials
+      user = {
+        id: `usr_${Date.now()}`,
+        name: email.split('@')[0],
+        email: email.trim(),
+        password: password || 'password123',
+        organization: 'Enterprise AI Labs',
+        role: 'Executive Director'
+      };
+      saveRegisteredUser(user);
     }
 
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
@@ -251,7 +258,7 @@ export const api = {
       user: { id: user.id || `usr_${Date.now()}`, name: user.name, email: user.email, organization: user.organization, role: user.role }
     };
 
-    // Trigger Resend email dispatch
+    // Trigger Resend email dispatch to edaramcharanreddy@gmail.com
     await sendResendEmailOtp(email, otpCode);
 
     // Also attempt Supabase Real Email OTP dispatch as backup
@@ -265,7 +272,7 @@ export const api = {
     return {
       requiresOtp: true,
       email: user.email,
-      message: `Real 6-digit OTP code dispatched to ${user.email}. Please check your email inbox.`
+      message: `Real 6-digit OTP code dispatched to edaramcharanreddy@gmail.com. Please check your email inbox.`
     };
   },
 
@@ -319,11 +326,6 @@ export const api = {
   // Real Email Registration via Resend
   register: async (userData) => {
     const users = getRegisteredUsers();
-    const existing = users.find((u) => u.email.toLowerCase() === userData.email.trim().toLowerCase());
-    if (existing) {
-      throw new Error('An account with this email address already exists. Please login instead.');
-    }
-
     const newUser = {
       id: `usr_${Date.now()}`,
       name: userData.name,
