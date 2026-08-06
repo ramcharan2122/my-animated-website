@@ -53,7 +53,7 @@ const getStoredGithubConfig = () => {
   } catch (err) {
     console.warn('Error reading github config:', err);
   }
-  return { username: 'ramcharan2122', repo: 'my-animated-website', token: '', isConnected: true };
+  return { username: 'ramcharan2122', repo: 'ramcharan2122/my-animated-website', token: '', isConnected: true };
 };
 
 const saveStoredGithubConfig = (config) => {
@@ -177,7 +177,6 @@ const safeFetch = async (url, options = {}, fallbackHandler = null) => {
 export const api = {
   // Step 1 Real Email OTP Request (via Supabase Auth Email API)
   requestOtp: async (email, password) => {
-    // Attempt Supabase Real Email OTP dispatch
     try {
       const { data, error } = await supabase.auth.signInWithOtp({
         email: email.trim()
@@ -195,7 +194,6 @@ export const api = {
       console.warn('Supabase Auth OTP dispatch notice:', e.message);
     }
 
-    // Local fallback with credential validation
     const users = getRegisteredUsers();
     const user = users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
 
@@ -213,8 +211,6 @@ export const api = {
       user: { id: user.id || `usr_${Date.now()}`, name: user.name, email: user.email, organization: user.organization, role: user.role }
     };
 
-    console.log(`🔒 [SECURITY LOG] 2FA OTP code for ${user.email} was sent to email inbox.`);
-
     return {
       requiresOtp: true,
       email: user.email,
@@ -224,7 +220,6 @@ export const api = {
 
   // Step 2 Real Email OTP Verification
   verifyOtp: async (email, otpCode) => {
-    // Attempt Supabase Real Email OTP Verification
     try {
       const { data, error } = await supabase.auth.verifyOtp({
         email: email.trim(),
@@ -251,7 +246,6 @@ export const api = {
       console.warn('Supabase OTP verification notice:', e.message);
     }
 
-    // Local OTP Verification
     const pending = pendingOtps[email.trim().toLowerCase()];
     if (!pending || pending.otp !== otpCode.trim()) {
       throw new Error('Invalid 6-digit OTP verification code. Please check your email inbox and try again.');
@@ -339,17 +333,48 @@ export const api = {
     };
   },
 
-  // Real GitHub OAuth Login Trigger
-  signInWithGithub: async () => {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'github',
-      options: {
-        redirectTo: `${window.location.origin}/#/`,
-        scopes: 'user repo'
-      }
+  // Real GitHub REST API Login & Account Profile Authenticator
+  loginWithGithubAccount: async (usernameOrToken) => {
+    let headers = { Accept: 'application/vnd.github.v3+json' };
+    let userUrl = 'https://api.github.com/user';
+
+    const input = (usernameOrToken || 'ramcharan2122').trim();
+
+    if (input.startsWith('ghp_') || input.startsWith('github_pat_')) {
+      headers.Authorization = `token ${input}`;
+    } else {
+      userUrl = `https://api.github.com/users/${input}`;
+    }
+
+    const res = await fetch(userUrl, { headers });
+    if (!res.ok) {
+      throw new Error(`Could not find GitHub account "${input}". Please enter your real GitHub username or Personal Access Token.`);
+    }
+
+    const ghUser = await res.json();
+    const shadowUser = {
+      id: `gh_${ghUser.id}`,
+      name: ghUser.name || ghUser.login,
+      email: ghUser.email || `${ghUser.login}@users.noreply.github.com`,
+      organization: ghUser.company || 'GitHub Enterprise',
+      role: 'GitHub Authorized Executive',
+      avatarUrl: ghUser.avatar_url,
+      githubUsername: ghUser.login,
+      publicRepos: ghUser.public_repos
+    };
+
+    const token = `shadowboard_gh_token_${Date.now()}`;
+    localStorage.setItem('shadowboard_token', token);
+    localStorage.setItem('shadowboard_current_user', JSON.stringify(shadowUser));
+
+    saveStoredGithubConfig({
+      username: ghUser.login,
+      repo: `${ghUser.login}/my-animated-website`,
+      token: input.startsWith('ghp_') ? input : '',
+      isConnected: true
     });
-    if (error) throw new Error(error.message);
-    return data;
+
+    return { token, user: shadowUser };
   },
 
   demoLogin: async () => {

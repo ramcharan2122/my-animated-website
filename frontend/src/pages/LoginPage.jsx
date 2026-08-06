@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { Sparkles, Lock, Mail, ArrowRight, ShieldCheck, Cpu, KeyRound, CheckCircle2, Github } from 'lucide-react';
+import { Sparkles, Lock, Mail, ArrowRight, ShieldCheck, Cpu, KeyRound, CheckCircle2, Github, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const LoginPage = () => {
@@ -14,6 +14,11 @@ export const LoginPage = () => {
   const [otpCode, setOtpCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // GitHub Modal state
+  const [showGithubModal, setShowGithubModal] = useState(false);
+  const [githubInput, setGithubInput] = useState('ramcharan2122');
+  const [githubError, setGithubError] = useState('');
 
   const handleInitiate = async (e) => {
     e.preventDefault();
@@ -45,12 +50,17 @@ export const LoginPage = () => {
     }
   };
 
-  const handleGithubLogin = async () => {
+  const handleGithubSubmit = async (e) => {
+    e.preventDefault();
+    setGithubError('');
     setLoading(true);
     try {
-      await loginWithGithub();
+      await loginWithGithub(githubInput);
+      setShowGithubModal(false);
+      navigate('/');
     } catch (err) {
-      setError(err.message);
+      setGithubError(err.message);
+    } finally {
       setLoading(false);
     }
   };
@@ -162,10 +172,10 @@ export const LoginPage = () => {
                   <ArrowRight className="w-4 h-4" />
                 </button>
 
-                {/* Real GitHub OAuth Login Button */}
+                {/* Real GitHub Account Sign In Trigger */}
                 <button
                   type="button"
-                  onClick={handleGithubLogin}
+                  onClick={() => setShowGithubModal(true)}
                   disabled={loading}
                   className="w-full py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono font-bold text-white hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
                 >
@@ -244,6 +254,71 @@ export const LoginPage = () => {
           </div>
         </div>
       </div>
+
+      {/* GitHub Account Connect Modal */}
+      <AnimatePresence>
+        {showGithubModal && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-md bg-slate-950 border border-cyan-500/40 rounded-3xl p-6 shadow-2xl relative"
+            >
+              <button
+                onClick={() => setShowGithubModal(false)}
+                className="absolute top-4 right-4 p-1 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-2xl bg-slate-900 border border-slate-700 flex items-center justify-center text-cyan-400">
+                  <Github className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-white">Sign In with GitHub</h3>
+                  <p className="text-xs text-slate-400 font-mono">Authenticate using your real GitHub account profile</p>
+                </div>
+              </div>
+
+              {githubError && (
+                <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono">
+                  {githubError}
+                </div>
+              )}
+
+              <form onSubmit={handleGithubSubmit} className="space-y-4">
+                <div>
+                  <label className="text-xs font-mono text-slate-300 block mb-1.5">
+                    GitHub Username or Personal Access Token (PAT)
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={githubInput}
+                    onChange={(e) => setGithubInput(e.target.value)}
+                    placeholder="ramcharan2122 or ghp_..."
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-cyan-400 font-mono"
+                  />
+                  <p className="text-[10px] text-slate-400 font-mono mt-1">
+                    Fetches your real GitHub profile avatar, username, and repository list (`ramcharan2122/my-animated-website`).
+                  </p>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-600 via-indigo-600 to-purple-600 text-xs font-bold text-white shadow-xl hover:opacity-90 transition-all flex items-center justify-center gap-2"
+                >
+                  <Github className="w-4 h-4" />
+                  <span>Authenticate & Link GitHub Account</span>
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

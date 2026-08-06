@@ -6,7 +6,7 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [githubConfig, setGithubConfig] = useState({ username: 'ramcharan2122', repo: 'my-animated-website', isConnected: true });
+  const [githubConfig, setGithubConfig] = useState({ username: 'ramcharan2122', repo: 'ramcharan2122/my-animated-website', isConnected: true });
 
   useEffect(() => {
     const token = localStorage.getItem('shadowboard_token');
@@ -47,8 +47,10 @@ export const AuthProvider = ({ children }) => {
     return await initiateLogin(email, password);
   };
 
-  const loginWithGithub = async () => {
-    return await api.signInWithGithub();
+  const loginWithGithub = async (usernameOrToken = 'ramcharan2122') => {
+    const res = await api.loginWithGithubAccount(usernameOrToken);
+    setUser(res.user);
+    return res;
   };
 
   const register = async (userData) => {
