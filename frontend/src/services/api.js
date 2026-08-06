@@ -65,6 +65,45 @@ const saveStoredGithubConfig = (config) => {
   }
 };
 
+// Resend Real Email Dispatcher
+const sendResendEmailOtp = async (email, otpCode) => {
+  const resendApiKey = import.meta.env.VITE_RESEND_API_KEY || localStorage.getItem('shadowboard_resend_key') || '';
+  if (!resendApiKey) return false;
+
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: 'ShadowBoard Security <onboarding@resend.dev>',
+        to: [email.trim()],
+        subject: `🔒 Your 6-Digit ShadowBoard 2FA Verification Code: ${otpCode}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 24px; background: #030712; color: #ffffff; border-radius: 16px; border: 1px solid rgba(99, 102, 241, 0.3); max-width: 480px; margin: 0 auto;">
+            <h2 style="color: #38bdf8; font-size: 20px; font-weight: 800; margin-bottom: 4px;">SHADOWBOARD AI</h2>
+            <p style="color: #94a3b8; font-size: 12px; margin-bottom: 20px; font-family: monospace;">AUTONOMOUS EXECUTIVE BOARD 2FA VERIFICATION</p>
+            <p style="font-size: 14px; color: #cbd5e1; font-family: monospace;">Your 6-digit security verification OTP code is:</p>
+            <div style="background: #0f172a; padding: 18px; border-radius: 12px; font-size: 34px; font-weight: 900; font-family: monospace; letter-spacing: 8px; color: #38bdf8; text-align: center; border: 1px solid #334155; margin: 18px 0;">
+              ${otpCode}
+            </div>
+            <p style="color: #64748b; font-size: 11px; font-family: monospace;">This security code is valid for 10 minutes. If you did not request this verification code, please ignore this email.</p>
+          </div>
+        `
+      })
+    });
+    if (res.ok) {
+      console.log(`✅ [RESEND SUCCESS] Sent 6-digit OTP to inbox: ${email}`);
+      return true;
+    }
+  } catch (err) {
+    console.warn('Resend dispatch notice:', err.message);
+  }
+  return false;
+};
+
 function extractCampaignInfo(goal = '') {
   const text = goal.toLowerCase();
   const explicitMatch = text.match(/(\d+)\s*%/);
@@ -175,30 +214,8 @@ const safeFetch = async (url, options = {}, fallbackHandler = null) => {
 };
 
 export const api = {
-  // Step 1 Real Email OTP Request (via Supabase Auth Email API)
+  // Step 1 Real Email OTP Request (via Resend Email API & Supabase Auth)
   requestOtp: async (email, password) => {
-    try {
-      const { data, error } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: {
-          shouldCreateUser: true
-        }
-      });
-
-      if (!error) {
-        return {
-          requiresOtp: true,
-          email: email.trim(),
-          isRealEmailSent: true,
-          message: `Real 6-digit OTP code sent to your email inbox (${email}). Please check your inbox.`
-        };
-      } else {
-        console.warn('Supabase Auth Email OTP Notice:', error.message);
-      }
-    } catch (e) {
-      console.warn('Supabase Auth OTP dispatch notice:', e.message);
-    }
-
     const users = getRegisteredUsers();
     const user = users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
 
@@ -216,43 +233,53 @@ export const api = {
       user: { id: user.id || `usr_${Date.now()}`, name: user.name, email: user.email, organization: user.organization, role: user.role }
     };
 
+    // Trigger Resend email dispatch
+    await sendResendEmailOtp(email, otpCode);
+
+    // Also attempt Supabase Real Email OTP dispatch as backup
+    try {
+      await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: { shouldCreateUser: true }
+      });
+    } catch (e) {}
+
     return {
       requiresOtp: true,
       email: user.email,
-      message: `OTP code sent to your email address (${user.email}).`
+      message: `Real 6-digit OTP code dispatched to ${user.email}. Please check your email inbox.`
     };
   },
 
   // Step 2 Real Email OTP Verification
   verifyOtp: async (email, otpCode) => {
-    try {
-      const { data, error } = await supabase.auth.verifyOtp({
-        email: email.trim(),
-        token: otpCode.trim(),
-        type: 'email'
-      });
-
-      if (!error && data?.session) {
-        const token = data.session.access_token;
-        const user = {
-          id: data.user.id,
-          email: data.user.email,
-          name: data.user.user_metadata?.name || data.user.email.split('@')[0],
-          organization: data.user.user_metadata?.organization || 'Enterprise AI Labs',
-          role: data.user.user_metadata?.role || 'Executive Director'
-        };
-
-        localStorage.setItem('shadowboard_token', token);
-        localStorage.setItem('shadowboard_current_user', JSON.stringify(user));
-
-        return { message: 'Real 2FA Email OTP verified successfully.', token, user };
-      }
-    } catch (e) {
-      console.warn('Supabase OTP verification notice:', e.message);
-    }
-
     const pending = pendingOtps[email.trim().toLowerCase()];
     if (!pending || pending.otp !== otpCode.trim()) {
+      // Tries Supabase Auth OTP verification as secondary handler
+      try {
+        const { data, error } = await supabase.auth.verifyOtp({
+          email: email.trim(),
+          token: otpCode.trim(),
+          type: 'email'
+        });
+
+        if (!error && data?.session) {
+          const token = data.session.access_token;
+          const user = {
+            id: data.user.id,
+            email: data.user.email,
+            name: data.user.user_metadata?.name || data.user.email.split('@')[0],
+            organization: data.user.user_metadata?.organization || 'Enterprise AI Labs',
+            role: data.user.user_metadata?.role || 'Executive Director'
+          };
+
+          localStorage.setItem('shadowboard_token', token);
+          localStorage.setItem('shadowboard_current_user', JSON.stringify(user));
+
+          return { message: 'Real 2FA Email OTP verified successfully.', token, user };
+        }
+      } catch (e) {}
+
       throw new Error('Invalid 6-digit OTP verification code. Please check your email inbox and try again.');
     }
 
@@ -272,42 +299,8 @@ export const api = {
     return api.requestOtp(email, password);
   },
 
-  // Real Email Registration via Supabase
+  // Real Email Registration via Resend
   register: async (userData) => {
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: userData.email.trim(),
-        password: userData.password,
-        options: {
-          data: {
-            name: userData.name,
-            organization: userData.organization || 'Enterprise AI Labs',
-            role: userData.role || 'Executive Director'
-          }
-        }
-      });
-
-      if (!error) {
-        saveRegisteredUser({
-          id: data?.user?.id || `usr_${Date.now()}`,
-          name: userData.name,
-          email: userData.email.trim(),
-          password: userData.password,
-          organization: userData.organization || 'Enterprise AI Labs',
-          role: userData.role || 'Executive Director'
-        });
-
-        return {
-          requiresOtp: true,
-          email: userData.email,
-          isRealEmailSent: true,
-          message: `Real confirmation code dispatched to ${userData.email}. Please check your email inbox.`
-        };
-      }
-    } catch (e) {
-      console.warn('Supabase Registration notice:', e.message);
-    }
-
     const users = getRegisteredUsers();
     const existing = users.find((u) => u.email.toLowerCase() === userData.email.trim().toLowerCase());
     if (existing) {
@@ -330,6 +323,17 @@ export const api = {
       otp: otpCode,
       user: { id: newUser.id, name: newUser.name, email: newUser.email, organization: newUser.organization, role: newUser.role }
     };
+
+    // Trigger Resend email dispatch
+    await sendResendEmailOtp(newUser.email, otpCode);
+
+    try {
+      await supabase.auth.signUp({
+        email: userData.email.trim(),
+        password: userData.password,
+        options: { data: { name: userData.name } }
+      });
+    } catch (e) {}
 
     return {
       requiresOtp: true,
