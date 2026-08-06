@@ -179,7 +179,7 @@ function extractCampaignInfo(goal = '') {
     const cleanGoal = goal.replace(/^(run|launch)\s+(a\s+)?/i, '').trim().toUpperCase();
     title = `⚡ ${cleanGoal.endsWith('SALE') ? cleanGoal : cleanGoal + ' SALE'}`;
     emoji = '⚡';
-    occasionKey = 'custom';
+    occasionKey = 'seasonal';
   }
 
   const cleanCodeName = title.replace(/[^A-Z]/g, '').substring(0, 8);
@@ -201,7 +201,9 @@ const getStoredCampaign = () => {
     const raw = localStorage.getItem('shadowboard_active_campaign');
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed && parsed.isActive) return parsed;
+      if (parsed && (parsed.isActive || parsed.status === 'ACTIVE')) {
+        return { ...parsed, isActive: true, status: 'ACTIVE' };
+      }
     }
   } catch (err) {
     console.warn('Error reading stored campaign:', err);
@@ -211,8 +213,9 @@ const getStoredCampaign = () => {
 
 const saveStoredCampaign = (campaignData) => {
   try {
-    if (campaignData && campaignData.isActive) {
-      localStorage.setItem('shadowboard_active_campaign', JSON.stringify(campaignData));
+    if (campaignData && (campaignData.isActive || campaignData.status === 'ACTIVE')) {
+      const activeObj = { ...campaignData, isActive: true, status: 'ACTIVE' };
+      localStorage.setItem('shadowboard_active_campaign', JSON.stringify(activeObj));
     } else {
       localStorage.removeItem('shadowboard_active_campaign');
     }
@@ -250,7 +253,6 @@ export const api = {
     let user = users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
 
     if (!user) {
-      // Auto-register user seamlessly if first time entering credentials
       user = {
         id: `usr_${Date.now()}`,
         name: email.split('@')[0],
@@ -268,10 +270,8 @@ export const api = {
       user: { id: user.id || `usr_${Date.now()}`, name: user.name, email: user.email, organization: user.organization, role: user.role }
     };
 
-    // Trigger Resend email dispatch to edaramcharanreddy@gmail.com
     await sendResendEmailOtp(email, otpCode);
 
-    // Also attempt Supabase Real Email OTP dispatch as backup
     try {
       await supabase.auth.signInWithOtp({
         email: email.trim(),
@@ -333,7 +333,6 @@ export const api = {
     return api.requestOtp(email, password);
   },
 
-  // Real Email Registration via Resend
   register: async (userData) => {
     const users = getRegisteredUsers();
     const newUser = {
@@ -353,7 +352,6 @@ export const api = {
       user: { id: newUser.id, name: newUser.name, email: newUser.email, organization: newUser.organization, role: newUser.role }
     };
 
-    // Trigger Resend email dispatch
     await sendResendEmailOtp(newUser.email, otpCode);
 
     try {
@@ -371,7 +369,6 @@ export const api = {
     };
   },
 
-  // Real GitHub REST API Login & Account Profile Authenticator
   loginWithGithubAccount: async (usernameOrToken) => {
     let headers = { Accept: 'application/vnd.github.v3+json' };
     let userUrl = 'https://api.github.com/user';
@@ -443,7 +440,6 @@ export const api = {
     });
   },
 
-  // GitHub Settings API
   getGithubConfig: async () => {
     return safeFetch(`${API_BASE}/settings/github`, {
       headers: getHeaders()
@@ -462,7 +458,6 @@ export const api = {
     });
   },
 
-  // GitHub Repository Direct REST API Commit Dispatcher
   commitCampaignToGithubRepo: async (campaignData) => {
     const ghConfig = getStoredGithubConfig();
 
@@ -513,7 +508,6 @@ export const api = {
     return { status: 'DISPATCHED', repository: ghConfig.repo || 'my-animated-website', message: 'Campaign dispatched to store!' };
   },
 
-  // Simulations
   runSimulation: async (payload) => {
     return safeFetch(`${API_BASE}/simulations/run`, {
       method: 'POST',
@@ -781,34 +775,37 @@ export const api = {
 
   // Live Demo Store Campaign Bridge
   getCampaignStatus: async () => {
+    const local = getStoredCampaign();
+    if (local && (local.isActive || local.status === 'ACTIVE')) return { ...local, isActive: true, status: 'ACTIVE' };
     return safeFetch(`${API_BASE}/campaign/status`, {}, () => getStoredCampaign());
   },
 
   deployCampaign: async (campaignPayload) => {
-    return safeFetch(`${API_BASE}/campaign/deploy`, {
+    const campaignInfo = extractCampaignInfo(campaignPayload.title || campaignPayload.goal || '');
+    const newCampaign = {
+      ...campaignInfo,
+      ...campaignPayload,
+      isActive: true,
+      status: 'ACTIVE'
+    };
+    saveStoredCampaign(newCampaign);
+
+    safeFetch(`${API_BASE}/campaign/deploy`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(campaignPayload)
-    }, () => {
-      const campaignInfo = extractCampaignInfo(campaignPayload.title || campaignPayload.goal || '');
-      const newCampaign = {
-        ...campaignInfo,
-        ...campaignPayload,
-        isActive: true,
-        status: 'ACTIVE'
-      };
-      saveStoredCampaign(newCampaign);
-      return newCampaign;
-    });
+    }, () => {}).catch(() => {});
+
+    return newCampaign;
   },
 
   resetCampaign: async () => {
-    return safeFetch(`${API_BASE}/campaign/reset`, {
+    saveStoredCampaign(null);
+    safeFetch(`${API_BASE}/campaign/reset`, {
       method: 'POST',
       headers: getHeaders()
-    }, () => {
-      saveStoredCampaign(null);
-      return { status: 'IDLE', isActive: false };
-    });
+    }, () => {}).catch(() => {});
+
+    return { status: 'IDLE', isActive: false };
   }
 };
