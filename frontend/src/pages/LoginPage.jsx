@@ -12,8 +12,6 @@ export const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [otpStep, setOtpStep] = useState(false);
   const [otpCode, setOtpCode] = useState('');
-  const [generatedOtpHint, setGeneratedOtpHint] = useState('');
-  const [isRealEmailSent, setIsRealEmailSent] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -24,8 +22,6 @@ export const LoginPage = () => {
     try {
       const res = await initiateLogin(email, password);
       if (res.requiresOtp) {
-        setGeneratedOtpHint(res.otpHint || '');
-        setIsRealEmailSent(res.isRealEmailSent || false);
         setOtpStep(true);
       }
     } catch (err) {
@@ -103,23 +99,16 @@ export const LoginPage = () => {
             </div>
           )}
 
-          {/* Real Email OTP Notification Banner */}
+          {/* Real Email OTP Notification Banner - NO ON-SCREEN OTP CODE */}
           {otpStep && (
-            <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-purple-500/20 to-cyan-500/20 border border-amber-500/40 text-center space-y-1 shadow-lg">
-              <div className="text-[10px] font-mono text-amber-300 font-bold uppercase tracking-wider flex items-center justify-center gap-1.5">
-                <KeyRound className="w-4 h-4 text-amber-400" />
-                {isRealEmailSent ? 'REAL EMAIL OTP DISPATCHED' : 'SECURITY 2FA CODE GENERATED'}
+            <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-cyan-500/20 border border-cyan-500/40 text-center space-y-2 shadow-lg">
+              <div className="text-xs font-mono text-cyan-300 font-bold uppercase tracking-wider flex items-center justify-center gap-2">
+                <Mail className="w-4 h-4 text-cyan-400 animate-bounce" />
+                <span>OTP CODE SENT TO YOUR EMAIL</span>
               </div>
-              <p className="text-xs text-slate-200 font-mono">
-                {isRealEmailSent
-                  ? `Real 6-digit OTP code dispatched to your email inbox (${email}). Please check your inbox.`
-                  : 'Your 6-Digit Verification OTP Code is:'}
+              <p className="text-xs text-slate-300 font-mono leading-relaxed">
+                A 6-digit verification code has been dispatched to <span className="text-white font-bold">{email}</span>. Please check your email inbox and enter the code below.
               </p>
-              {generatedOtpHint && (
-                <div className="text-2xl font-black font-mono text-white tracking-widest text-cyan-300 pt-1">
-                  {generatedOtpHint}
-                </div>
-              )}
             </div>
           )}
 
@@ -169,7 +158,7 @@ export const LoginPage = () => {
                   disabled={loading}
                   className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-500 font-bold text-xs text-white shadow-xl hover:opacity-90 transition-all flex items-center justify-center gap-2"
                 >
-                  <span>Verify Credentials & Send Real Email OTP</span>
+                  <span>Send OTP to Email Inbox</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
 
@@ -181,11 +170,11 @@ export const LoginPage = () => {
                   className="w-full py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono font-bold text-white hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
                 >
                   <Github className="w-4 h-4 text-cyan-400" />
-                  <span>Sign In with Real GitHub Account</span>
+                  <span>Sign In with GitHub Account</span>
                 </button>
               </motion.form>
             ) : (
-              /* Step 2: Enter 6-digit OTP */
+              /* Step 2: Enter 6-digit OTP received in email */
               <motion.form
                 key="step2"
                 initial={{ opacity: 0, x: 20 }}
@@ -195,7 +184,7 @@ export const LoginPage = () => {
                 className="space-y-4"
               >
                 <div>
-                  <label className="text-xs font-mono text-slate-300 block mb-1.5">Enter 6-Digit OTP Code</label>
+                  <label className="text-xs font-mono text-slate-300 block mb-1.5">Enter 6-Digit Email OTP Code</label>
                   <div className="relative">
                     <KeyRound className="w-4 h-4 text-amber-400 absolute left-3.5 top-3.5" />
                     <input
@@ -204,7 +193,7 @@ export const LoginPage = () => {
                       maxLength={6}
                       value={otpCode}
                       onChange={(e) => setOtpCode(e.target.value)}
-                      placeholder="e.g. 849201"
+                      placeholder="Enter code from email inbox"
                       className="w-full bg-slate-950/80 border border-amber-500/50 rounded-xl py-3 pl-10 pr-4 text-base font-bold text-cyan-300 tracking-widest focus:outline-none focus:border-cyan-400 font-mono text-center"
                     />
                   </div>

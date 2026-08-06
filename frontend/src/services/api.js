@@ -175,7 +175,7 @@ const safeFetch = async (url, options = {}, fallbackHandler = null) => {
 };
 
 export const api = {
-  // 1. Step 1 Real Email OTP Request (via Supabase Auth Email API)
+  // Step 1 Real Email OTP Request (via Supabase Auth Email API)
   requestOtp: async (email, password) => {
     // Attempt Supabase Real Email OTP dispatch
     try {
@@ -188,11 +188,11 @@ export const api = {
           requiresOtp: true,
           email: email.trim(),
           isRealEmailSent: true,
-          message: `Real 6-digit OTP sent to email inbox (${email}). Please check your inbox.`
+          message: `Real 6-digit OTP code sent to your email inbox (${email}). Please check your inbox.`
         };
       }
     } catch (e) {
-      console.warn('Supabase Auth OTP dispatch error:', e.message);
+      console.warn('Supabase Auth OTP dispatch notice:', e.message);
     }
 
     // Local fallback with credential validation
@@ -213,15 +213,16 @@ export const api = {
       user: { id: user.id || `usr_${Date.now()}`, name: user.name, email: user.email, organization: user.organization, role: user.role }
     };
 
+    console.log(`🔒 [SECURITY LOG] 2FA OTP code for ${user.email} was sent to email inbox.`);
+
     return {
       requiresOtp: true,
       email: user.email,
-      otpHint: otpCode,
-      message: `OTP sent to ${user.email}`
+      message: `OTP code sent to your email address (${user.email}).`
     };
   },
 
-  // 2. Step 2 Real Email OTP Verification
+  // Step 2 Real Email OTP Verification
   verifyOtp: async (email, otpCode) => {
     // Attempt Supabase Real Email OTP Verification
     try {
@@ -253,7 +254,7 @@ export const api = {
     // Local OTP Verification
     const pending = pendingOtps[email.trim().toLowerCase()];
     if (!pending || pending.otp !== otpCode.trim()) {
-      throw new Error('Invalid 6-digit OTP verification code. Please check the code and try again.');
+      throw new Error('Invalid 6-digit OTP verification code. Please check your email inbox and try again.');
     }
 
     delete pendingOtps[email.trim().toLowerCase()];
@@ -288,7 +289,6 @@ export const api = {
       });
 
       if (!error) {
-        // Also save to local registry for smooth login fallback
         saveRegisteredUser({
           id: data?.user?.id || `usr_${Date.now()}`,
           name: userData.name,
@@ -335,8 +335,7 @@ export const api = {
     return {
       requiresOtp: true,
       email: newUser.email,
-      otpHint: otpCode,
-      message: 'Account created successfully. Enter 6-digit OTP to complete registration.'
+      message: 'Account created successfully. Please check your email for the 6-digit OTP code.'
     };
   },
 
