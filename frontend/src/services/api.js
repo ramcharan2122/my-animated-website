@@ -72,45 +72,54 @@ const saveStoredGithubConfig = (config) => {
 
 // Resend Real Email Dispatcher
 const sendResendEmailOtp = async (email, otpCode) => {
+  // 1. First try backend proxy (server-to-server email dispatch - bypasses browser CORS!)
+  try {
+    const res = await fetch(`${API_BASE}/auth/send-otp-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim(), otpCode })
+    });
+    if (res.ok) {
+      console.log(`✅ [BACKEND EMAIL PROXY SUCCESS] Dispatched OTP email for ${email}`);
+      return true;
+    }
+  } catch (e) {
+    console.warn('Backend proxy notice:', e.message);
+  }
+
+  // 2. Direct Resend API Fallback
   const resendApiKey = import.meta.env.VITE_RESEND_API_KEY || localStorage.getItem('shadowboard_resend_key') || DEFAULT_RESEND_KEY;
   if (!resendApiKey) return false;
 
-  // Always send to user's registered Resend inbox (edaramcharanreddy@gmail.com) in testing mode
-  const targetEmails = Array.from(new Set([email.trim(), 'edaramcharanreddy@gmail.com']));
-
-  for (const recipient of targetEmails) {
-    try {
-      const res = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${resendApiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          from: 'onboarding@resend.dev',
-          to: recipient,
-          subject: `🔒 Your 6-Digit ShadowBoard 2FA Verification Code: ${otpCode}`,
-          html: `
-            <div style="font-family: Arial, sans-serif; padding: 24px; background: #030712; color: #ffffff; border-radius: 16px; border: 1px solid rgba(99, 102, 241, 0.3); max-width: 480px; margin: 0 auto;">
-              <h2 style="color: #38bdf8; font-size: 20px; font-weight: 800; margin-bottom: 4px;">SHADOWBOARD AI</h2>
-              <p style="color: #94a3b8; font-size: 12px; margin-bottom: 20px; font-family: monospace;">AUTONOMOUS EXECUTIVE BOARD 2FA VERIFICATION</p>
-              <p style="font-size: 14px; color: #cbd5e1; font-family: monospace;">Your 6-digit security verification OTP code is:</p>
-              <div style="background: #0f172a; padding: 18px; border-radius: 12px; font-size: 34px; font-weight: 900; font-family: monospace; letter-spacing: 8px; color: #38bdf8; text-align: center; border: 1px solid #334155; margin: 18px 0;">
-                ${otpCode}
-              </div>
-              <p style="color: #64748b; font-size: 11px; font-family: monospace;">This security code is valid for 10 minutes. Sent to ${recipient}.</p>
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: 'onboarding@resend.dev',
+        to: 'edaramcharanreddy@gmail.com',
+        subject: `🔒 Your 6-Digit ShadowBoard 2FA Verification Code: ${otpCode}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 24px; background: #030712; color: #ffffff; border-radius: 16px; border: 1px solid rgba(99, 102, 241, 0.3); max-width: 480px; margin: 0 auto;">
+            <h2 style="color: #38bdf8; font-size: 20px; font-weight: 800; margin-bottom: 4px;">SHADOWBOARD AI</h2>
+            <p style="color: #94a3b8; font-size: 12px; margin-bottom: 20px; font-family: monospace;">AUTONOMOUS EXECUTIVE BOARD 2FA VERIFICATION</p>
+            <p style="font-size: 14px; color: #cbd5e1; font-family: monospace;">Your 6-digit security verification OTP code is:</p>
+            <div style="background: #0f172a; padding: 18px; border-radius: 12px; font-size: 34px; font-weight: 900; font-family: monospace; letter-spacing: 8px; color: #38bdf8; text-align: center; border: 1px solid #334155; margin: 18px 0;">
+              ${otpCode}
             </div>
-          `
-        })
-      });
-      if (res.ok) {
-        console.log(`✅ [RESEND SUCCESS] Delivered 6-digit OTP code to inbox: ${recipient}`);
-      }
-    } catch (err) {
-      console.warn('Resend dispatch notice:', err.message);
-    }
+            <p style="color: #64748b; font-size: 11px; font-family: monospace;">This security code is valid for 10 minutes. Requested for ${email}.</p>
+          </div>
+        `
+      })
+    });
+    return true;
+  } catch (err) {
+    console.warn('Resend direct dispatch notice:', err.message);
   }
-  return true;
+  return false;
 };
 
 function extractCampaignInfo(goal = '') {
@@ -683,14 +692,14 @@ export const api = {
             ],
             department_highlights: [
               { department: 'Finance (CFO)', status: 'Approved', metric: '+31.5% Blended Net Margin' },
-              { department: 'Analytics (CDO)', status: 'Validated', metric: `Price Elasticity Peak at ${maxDisc}%` },
-              { department: 'Marketing (CMO)', status: 'Active', metric: `UP TO ${maxDisc}% OFF Banner Live` }
+              { department: 'Analytics (CDO)', status: 'Validated', metric: `Price Elasticity Peak at ${maxDiscount}%` },
+              { department: 'Marketing (CMO)', status: 'Active', metric: `UP TO ${maxDiscount}% OFF Banner Live` }
             ],
             milestones: [
-              { phase: 'Immediate', title: 'Live Store Dynamic Campaign Dispatch', detail: `Deploy ${campaignInfo.title} with UP TO ${maxDisc}% OFF banner and code ${campaignInfo.promoCode}.` },
+              { phase: 'Immediate', title: 'Live Store Dynamic Campaign Dispatch', detail: `Deploy ${campaignInfo.title} with UP TO ${maxDiscount}% OFF banner and code ${campaignInfo.promoCode}.` },
               { phase: 'Real-Time', title: 'Telemetry & Margin Protection', detail: `Monitor checkout conversions to guarantee blended net margin stays above target +25%.` }
             ],
-            final_recommendation: `AUTONOMOUS BOARD DECISION: Execute ${campaignInfo.title} with variable product discounts UP TO ${maxDisc}% OFF.`
+            final_recommendation: `AUTONOMOUS BOARD DECISION: Execute ${campaignInfo.title} with variable product discounts UP TO ${maxDiscount}% OFF.`
           }
         }
       };
