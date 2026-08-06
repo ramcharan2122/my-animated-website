@@ -151,7 +151,11 @@ function extractCampaignInfo(goal = '') {
   let emoji = '⚡';
   let occasionKey = 'seasonal';
 
-  if (text.includes('dussehra') || text.includes('dasara')) {
+  if (text.includes('spiderman') || text.includes('spider-man')) {
+    title = '🕷️ SPIDER-MAN LIMITED EDITION SALE';
+    emoji = '🕷️';
+    occasionKey = 'spiderman';
+  } else if (text.includes('dussehra') || text.includes('dasara')) {
     title = '🏹 DUSSEHRA FESTIVAL CELEBRATION';
     emoji = '🏹';
     occasionKey = 'dussehra';
@@ -171,6 +175,11 @@ function extractCampaignInfo(goal = '') {
     title = '🪔 DIWALI FESTIVAL OF LIGHTS SALE';
     emoji = '🪔';
     occasionKey = 'diwali';
+  } else if (goal.trim()) {
+    const cleanGoal = goal.replace(/^(run|launch)\s+(a\s+)?/i, '').trim().toUpperCase();
+    title = `⚡ ${cleanGoal.endsWith('SALE') ? cleanGoal : cleanGoal + ' SALE'}`;
+    emoji = '⚡';
+    occasionKey = 'custom';
   }
 
   const cleanCodeName = title.replace(/[^A-Z]/g, '').substring(0, 8);
@@ -695,14 +704,14 @@ export const api = {
             ],
             department_highlights: [
               { department: 'Finance (CFO)', status: 'Approved', metric: '+31.5% Blended Net Margin' },
-              { department: 'Analytics (CDO)', status: 'Validated', metric: `Price Elasticity Peak at ${maxDiscount}%` },
-              { department: 'Marketing (CMO)', status: 'Active', metric: `UP TO ${maxDiscount}% OFF Banner Live` }
+              { department: 'Analytics (CDO)', status: 'Validated', metric: `Price Elasticity Peak at ${maxDisc}%` },
+              { department: 'Marketing (CMO)', status: 'Active', metric: `UP TO ${maxDisc}% OFF Banner Live` }
             ],
             milestones: [
-              { phase: 'Immediate', title: 'Live Store Dynamic Campaign Dispatch', detail: `Deploy ${campaignInfo.title} with UP TO ${maxDiscount}% OFF banner and code ${campaignInfo.promoCode}.` },
+              { phase: 'Immediate', title: 'Live Store Dynamic Campaign Dispatch', detail: `Deploy ${campaignInfo.title} with UP TO ${maxDisc}% OFF banner and code ${campaignInfo.promoCode}.` },
               { phase: 'Real-Time', title: 'Telemetry & Margin Protection', detail: `Monitor checkout conversions to guarantee blended net margin stays above target +25%.` }
             ],
-            final_recommendation: `AUTONOMOUS BOARD DECISION: Execute ${campaignInfo.title} with variable product discounts UP TO ${maxDiscount}% OFF.`
+            final_recommendation: `AUTONOMOUS BOARD DECISION: Execute ${campaignInfo.title} with variable product discounts UP TO ${maxDisc}% OFF.`
           }
         }
       };
