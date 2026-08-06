@@ -179,7 +179,10 @@ export const api = {
   requestOtp: async (email, password) => {
     try {
       const { data, error } = await supabase.auth.signInWithOtp({
-        email: email.trim()
+        email: email.trim(),
+        options: {
+          shouldCreateUser: true
+        }
       });
 
       if (!error) {
@@ -189,6 +192,8 @@ export const api = {
           isRealEmailSent: true,
           message: `Real 6-digit OTP code sent to your email inbox (${email}). Please check your inbox.`
         };
+      } else {
+        console.warn('Supabase Auth Email OTP Notice:', error.message);
       }
     } catch (e) {
       console.warn('Supabase Auth OTP dispatch notice:', e.message);
