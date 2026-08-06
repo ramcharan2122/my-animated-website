@@ -80,7 +80,31 @@ function extractCampaignInfo(goal = '') {
   };
 }
 
-let activeCampaignStore = { status: 'IDLE', isActive: false };
+const getStoredCampaign = () => {
+  try {
+    const raw = localStorage.getItem('shadowboard_active_campaign');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.isActive) return parsed;
+    }
+  } catch (err) {
+    console.warn('Error reading stored campaign:', err);
+  }
+  return { status: 'IDLE', isActive: false };
+};
+
+const saveStoredCampaign = (campaignData) => {
+  try {
+    if (campaignData && campaignData.isActive) {
+      localStorage.setItem('shadowboard_active_campaign', JSON.stringify(campaignData));
+    } else {
+      localStorage.removeItem('shadowboard_active_campaign');
+    }
+    window.dispatchEvent(new Event('storage'));
+  } catch (err) {
+    console.warn('Error saving stored campaign:', err);
+  }
+};
 
 const safeFetch = async (url, options = {}, fallbackHandler = null) => {
   try {
@@ -166,8 +190,7 @@ export const api = {
       const maxDisc = campaignInfo.maxDiscount;
       const pDiscounts = campaignInfo.productDiscounts;
 
-      // Update in-memory campaign state for live demo store bridge
-      activeCampaignStore = {
+      const newCampaign = {
         status: 'ACTIVE',
         isActive: true,
         title: campaignInfo.title,
@@ -179,6 +202,8 @@ export const api = {
         promoCode: campaignInfo.promoCode,
         bannerText: campaignInfo.bannerText
       };
+
+      saveStoredCampaign(newCampaign);
 
       return {
         message: 'Autonomous boardroom simulation completed successfully.',
@@ -421,7 +446,7 @@ export const api = {
 
   // Live Demo Store Campaign Bridge
   getCampaignStatus: async () => {
-    return safeFetch(`${API_BASE}/campaign/status`, {}, () => activeCampaignStore);
+    return safeFetch(`${API_BASE}/campaign/status`, {}, () => getStoredCampaign());
   },
 
   deployCampaign: async (campaignPayload) => {
@@ -430,8 +455,15 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify(campaignPayload)
     }, () => {
-      activeCampaignStore = { ...campaignPayload, isActive: true, status: 'ACTIVE' };
-      return activeCampaignStore;
+      const campaignInfo = extractCampaignInfo(campaignPayload.title || campaignPayload.goal || '');
+      const newCampaign = {
+        ...campaignInfo,
+        ...campaignPayload,
+        isActive: true,
+        status: 'ACTIVE'
+      };
+      saveStoredCampaign(newCampaign);
+      return newCampaign;
     });
   },
 
@@ -440,8 +472,8 @@ export const api = {
       method: 'POST',
       headers: getHeaders()
     }, () => {
-      activeCampaignStore = { status: 'IDLE', isActive: false };
-      return activeCampaignStore;
+      saveStoredCampaign(null);
+      return { status: 'IDLE', isActive: false };
     });
   }
 };

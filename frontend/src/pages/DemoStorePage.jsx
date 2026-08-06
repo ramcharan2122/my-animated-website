@@ -83,7 +83,7 @@ export const DemoStorePage = () => {
   const fetchCampaign = async () => {
     try {
       const data = await api.getCampaignStatus();
-      setCampaign(data);
+      setCampaign(data || { isActive: false });
     } catch (err) {
       console.warn('Error fetching campaign status:', err);
     }
@@ -91,8 +91,12 @@ export const DemoStorePage = () => {
 
   useEffect(() => {
     fetchCampaign();
-    const interval = setInterval(fetchCampaign, 3000);
-    return () => clearInterval(interval);
+    const interval = setInterval(fetchCampaign, 1000);
+    window.addEventListener('storage', fetchCampaign);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', fetchCampaign);
+    };
   }, []);
 
   const handleReset = async () => {
