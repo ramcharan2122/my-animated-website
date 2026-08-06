@@ -255,7 +255,6 @@ export const api = {
   verifyOtp: async (email, otpCode) => {
     const pending = pendingOtps[email.trim().toLowerCase()];
     if (!pending || pending.otp !== otpCode.trim()) {
-      // Tries Supabase Auth OTP verification as secondary handler
       try {
         const { data, error } = await supabase.auth.verifyOtp({
           email: email.trim(),
