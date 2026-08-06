@@ -1,10 +1,10 @@
 services:
   # Animated Website Frontend (Static Site)
-  - type: static
+  - type: web
     name: my-animated-website
     env: static
     buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: frontend/dist
+    staticPublishPath: ./frontend/dist
     routes:
       - type: rewrite
         source: /*
