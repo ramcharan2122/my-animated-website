@@ -94,7 +94,7 @@ export const ExecutiveReportView = ({ simulationData }) => {
                   occasionKey,
                   simulationId: simulation.id
                 });
-                window.open('/demo-store', '_blank');
+                window.open('#/demo-store', '_blank');
               } catch (err) {
                 alert('Failed to deploy to store: ' + err.message);
               }

@@ -34,7 +34,7 @@ export const DashboardPage = () => {
           </div>
 
           <a
-            href="/demo-store"
+            href="#/demo-store"
             target="_blank"
             rel="noopener noreferrer"
             onClick={async () => {

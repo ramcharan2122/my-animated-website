@@ -40,7 +40,7 @@ export const Navbar = ({ onOpenCommandPalette }) => {
       <div className="hidden md:flex items-center gap-4">
         {/* Live Demo Store Link */}
         <a
-          href="/demo-store"
+          href="#/demo-store"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 to-rose-500/20 border border-amber-500/40 text-xs font-mono font-bold text-amber-300 hover:opacity-90 transition-all shadow-[0_0_15px_rgba(245,158,11,0.2)]"
