@@ -33,70 +33,75 @@ export const DashboardPage = () => {
             </div>
           </div>
 
-          <a
-            href="#/demo-store"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={async () => {
+          <button
+            onClick={async (e) => {
+              e.preventDefault();
               try {
                 const goal = currentSimulation.simulation?.goal || 'Special Sale';
                 const text = goal.toLowerCase();
                 const discountMatch = text.match(/(\d+)\s*%/);
-                const discountPercentage = discountMatch ? parseInt(discountMatch[1]) : 40;
+                const discountPercentage = discountMatch ? parseInt(discountMatch[1]) : 55;
 
                 let title = '⚡ FESTIVAL MEGA SALE';
-                let promoCode = `FESTIVAL-SHADOW${discountPercentage}`;
+                let promoCode = `FESTIVAL-UPTO${discountPercentage}`;
                 let occasionKey = 'seasonal';
 
-                if (text.includes('dussehra') || text.includes('dasara')) {
+                if (text.includes('spiderman') || text.includes('spider-man')) {
+                  title = '🕷️ SPIDER-MAN LIMITED EDITION SALE';
+                  promoCode = `SPIDER-UPTO${discountPercentage}`;
+                  occasionKey = 'spiderman';
+                } else if (text.includes('dussehra') || text.includes('dasara')) {
                   title = '🏹 DUSSEHRA FESTIVAL CELEBRATION';
-                  promoCode = `DUSSEHRA-${discountMatch ? 'SHADOW' + discountPercentage : 'PROFIT35'}`;
+                  promoCode = `DUSSEHRA-UPTO${discountPercentage}`;
                   occasionKey = 'dussehra';
                 } else if (text.includes('christmas') || text.includes('xmas')) {
                   title = '🎄 CHRISTMAS HOLIDAY SALE';
-                  promoCode = `XMAS-${discountMatch ? 'SHADOW' + discountPercentage : 'PROFIT35'}`;
+                  promoCode = `XMAS-UPTO${discountPercentage}`;
                   occasionKey = 'christmas';
                 } else if (text.includes('black friday')) {
                   title = '🛍️ BLACK FRIDAY CYBER SALE';
-                  promoCode = `BLACKFRIDAY-${discountMatch ? 'SHADOW' + discountPercentage : 'PROFIT35'}`;
+                  promoCode = `BLACKFRIDAY-UPTO${discountPercentage}`;
                   occasionKey = 'blackfriday';
                 } else if (text.includes('new year')) {
                   title = '🎆 NEW YEAR CELEBRATION SALE';
-                  promoCode = `NEWYEAR-${discountMatch ? 'SHADOW' + discountPercentage : 'PROFIT35'}`;
+                  promoCode = `NEWYEAR-UPTO${discountPercentage}`;
                   occasionKey = 'newyear';
                 } else if (text.includes('diwali') || text.includes('deepavali')) {
                   title = '🪔 DIWALI FESTIVAL OF LIGHTS SALE';
-                  promoCode = `DIWALI-${discountMatch ? 'SHADOW' + discountPercentage : 'PROFIT35'}`;
+                  promoCode = `DIWALI-UPTO${discountPercentage}`;
                   occasionKey = 'diwali';
                 } else {
-                  const saleMatch = goal.match(/(?:launch|run|start|create)?\s*(?:a|an)?\s*([a-zA-Z0-9\s]+(?:sale|campaign|offer|discount|promo))/i);
-                  const name = saleMatch ? saleMatch[1].trim().toUpperCase() : 'SPECIAL MEGA SALE';
-                  title = `⚡ ${name}`;
-                  promoCode = `${name.replace(/[^A-Z0-9]/g, '').substring(0, 10)}-PROFIT35`;
+                  const cleanGoal = goal.replace(/^(run|launch)\s+(a\s+)?/i, '').trim().toUpperCase();
+                  title = `⚡ ${cleanGoal.endsWith('SALE') ? cleanGoal : cleanGoal + ' SALE'}`;
+                  promoCode = `${cleanGoal.replace(/[^A-Z0-9]/g, '').substring(0, 8)}-UPTO${discountPercentage}`;
                   occasionKey = 'seasonal';
                 }
 
                 const campaignData = {
                   title,
+                  maxDiscount: discountPercentage,
                   discountPercentage,
                   promoCode,
-                  bannerText: `SPECIAL CELEBRATION • ${discountPercentage}% OFF ACROSS ALL CATEGORIES!`,
+                  bannerText: `SPECIAL CELEBRATION • UP TO ${discountPercentage}% OFF ACROSS ALL CATEGORIES!`,
                   marketingSpend: currentSimulation.simulation?.marketing_spend || '₹50 Lakhs',
-                  occasionKey
+                  occasionKey,
+                  isActive: true,
+                  status: 'ACTIVE'
                 };
 
                 await api.deployCampaign(campaignData);
                 await api.commitCampaignToGithubRepo(campaignData);
-              } catch (e) {
-                console.warn(e);
+              } catch (err) {
+                console.warn('Deploy error:', err);
               }
+              window.open('#/demo-store', '_blank');
             }}
-            className="px-5 py-2.5 rounded-xl bg-black text-amber-300 font-extrabold text-xs shadow-xl hover:bg-slate-900 transition-all shrink-0 flex items-center gap-2"
+            className="px-5 py-2.5 rounded-xl bg-black text-amber-300 font-extrabold text-xs shadow-xl hover:bg-slate-900 transition-all shrink-0 flex items-center gap-2 cursor-pointer"
           >
             <Github className="w-4 h-4 text-cyan-400" />
             <Sparkles className="w-4 h-4 text-amber-400" />
             <span>🚀 DEPLOY TO LIVE STORE & LINKED GITHUB REPO</span>
-          </a>
+          </button>
         </motion.div>
       )}
 
