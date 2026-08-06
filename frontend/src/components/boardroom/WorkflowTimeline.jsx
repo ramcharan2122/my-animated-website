@@ -20,8 +20,8 @@ export const WorkflowTimeline = () => {
       {/* Step Progress Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 mb-3">
         {steps.map((step) => {
-          const isDone = currentStep > step.num;
-          const isActive = currentStep === step.num;
+          const isDone = currentStep > step.num || (currentStep === 6 && !isRunning);
+          const isActive = currentStep === step.num && isRunning;
 
           return (
             <div
@@ -54,10 +54,18 @@ export const WorkflowTimeline = () => {
       {stepLabel && (
         <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-950/60 border border-slate-800 text-xs font-mono text-cyan-300">
           <span className="flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-spin" />
+            {isRunning ? (
+              <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-spin" />
+            ) : (
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            )}
             {stepLabel}
           </span>
-          {isRunning && <span className="text-[10px] text-amber-400 font-bold">PROCESSING...</span>}
+          {isRunning ? (
+            <span className="text-[10px] text-amber-400 font-bold">PROCESSING...</span>
+          ) : (
+            <span className="text-[10px] text-emerald-400 font-bold uppercase">COMPLETED</span>
+          )}
         </div>
       )}
     </div>
