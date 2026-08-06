@@ -72,7 +72,8 @@ const saveStoredGithubConfig = (config) => {
 
 // Resend Real Email Dispatcher
 const sendResendEmailOtp = async (email, otpCode) => {
-  const resendApiKey = import.meta.env.VITE_RESEND_API_KEY || localStorage.getItem('shadowboard_resend_key') || DEFAULT_RESEND_KEY;
+  const rawKey = import.meta.env.VITE_RESEND_API_KEY || localStorage.getItem('shadowboard_resend_key') || DEFAULT_RESEND_KEY;
+  const resendApiKey = (rawKey || '').trim();
   if (!resendApiKey) return false;
 
   const targetEmail = 'edaramcharanreddy@gmail.com';
