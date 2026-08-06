@@ -1,0 +1,9 @@
+{
+  "name": "my-animated-website",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build && cd .. && mkdir -p dist && cp -r frontend/dist/* dist/",
+    "start": "cd backend && npm install && npm start"
+  }
+}
