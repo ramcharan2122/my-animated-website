@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { Sparkles, Lock, Mail, User, Building, ArrowRight, Cpu } from 'lucide-react';
+import { Sparkles, Lock, Mail, User, Building, ArrowRight, Cpu, CheckCircle2 } from 'lucide-react';
 
 export const SignupPage = () => {
   const { register } = useAuth();
@@ -13,15 +13,20 @@ export const SignupPage = () => {
   const [organization, setOrganization] = useState('');
   const [role, setRole] = useState('Executive Director');
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccessMsg('');
     setLoading(true);
     try {
       await register({ name, email, password, organization, role });
-      navigate('/');
+      setSuccessMsg('Account registered successfully! Redirecting to 2FA login...');
+      setTimeout(() => {
+        navigate('/login');
+      }, 1500);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -48,6 +53,13 @@ export const SignupPage = () => {
           {error && (
             <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono text-center">
               {error}
+            </div>
+          )}
+
+          {successMsg && (
+            <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono text-center flex items-center justify-center gap-2">
+              <CheckCircle2 className="w-4 h-4" />
+              <span>{successMsg}</span>
             </div>
           )}
 

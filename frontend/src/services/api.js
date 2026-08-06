@@ -12,11 +12,57 @@ const MOCK_DEMO_USER = {
   id: 'usr_demo_executive_001',
   name: 'Alex Vance (Executive Demo)',
   email: 'executive@enterprise.ai',
+  password: 'password123',
   organization: 'Enterprise Dynamics Corp',
   role: 'Group CEO & Founder'
 };
 
 const MOCK_DEMO_TOKEN = 'shadowboard_demo_jwt_token_2026_x1';
+
+// Persistent User Accounts Storage
+const getRegisteredUsers = () => {
+  try {
+    const raw = localStorage.getItem('shadowboard_registered_users');
+    if (raw) return JSON.parse(raw);
+  } catch (err) {
+    console.warn('Error reading registered users:', err);
+  }
+  return [MOCK_DEMO_USER];
+};
+
+const saveRegisteredUser = (userObj) => {
+  const users = getRegisteredUsers();
+  const existingIdx = users.findIndex((u) => u.email.toLowerCase() === userObj.email.toLowerCase());
+  if (existingIdx >= 0) {
+    users[existingIdx] = userObj;
+  } else {
+    users.push(userObj);
+  }
+  localStorage.setItem('shadowboard_registered_users', JSON.stringify(users));
+};
+
+// Pending 2FA OTP Store
+const pendingOtps = {};
+
+// GitHub Configuration Storage
+const getStoredGithubConfig = () => {
+  try {
+    const raw = localStorage.getItem('shadowboard_github_config');
+    if (raw) return JSON.parse(raw);
+  } catch (err) {
+    console.warn('Error reading github config:', err);
+  }
+  return { username: 'ramcharan2122', repo: 'my-animated-website', token: '', isConnected: true };
+};
+
+const saveStoredGithubConfig = (config) => {
+  try {
+    localStorage.setItem('shadowboard_github_config', JSON.stringify(config));
+    window.dispatchEvent(new Event('storage'));
+  } catch (err) {
+    console.warn('Error saving github config:', err);
+  }
+};
 
 function extractCampaignInfo(goal = '') {
   const text = goal.toLowerCase();
@@ -128,54 +174,208 @@ const safeFetch = async (url, options = {}, fallbackHandler = null) => {
 };
 
 export const api = {
-  // Auth
-  login: async (email, password) => {
-    return safeFetch(`${API_BASE}/auth/login`, {
+  // 1. Step 1 Login Request (Validate credentials & generate 6-digit OTP)
+  requestOtp: async (email, password) => {
+    return safeFetch(`${API_BASE}/auth/request-otp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
-    }, () => ({
-      message: 'Login successful (Client Demo Mode).',
-      token: MOCK_DEMO_TOKEN,
-      user: { ...MOCK_DEMO_USER, email: email || MOCK_DEMO_USER.email }
-    }));
+    }, () => {
+      const users = getRegisteredUsers();
+      const user = users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
+
+      if (!user) {
+        throw new Error('No account found with this email. Please click "Register Organization" to create an account.');
+      }
+
+      if (user.password && user.password !== password) {
+        throw new Error('Invalid password. Access key does not match your registered account.');
+      }
+
+      // Generate random 6-digit OTP
+      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+      pendingOtps[email.trim().toLowerCase()] = {
+        otp: otpCode,
+        user: { id: user.id || `usr_${Date.now()}`, name: user.name, email: user.email, organization: user.organization, role: user.role }
+      };
+
+      return {
+        requiresOtp: true,
+        email: user.email,
+        otpHint: otpCode,
+        message: `OTP generated for ${user.email}`
+      };
+    });
+  },
+
+  // 2. Step 2 OTP Verification
+  verifyOtp: async (email, otpCode) => {
+    return safeFetch(`${API_BASE}/auth/verify-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otpCode })
+    }, () => {
+      const pending = pendingOtps[email.trim().toLowerCase()];
+      if (!pending || pending.otp !== otpCode.trim()) {
+        throw new Error('Invalid 6-digit OTP verification code. Please check the code and try again.');
+      }
+
+      delete pendingOtps[email.trim().toLowerCase()];
+      const token = `shadowboard_auth_token_${Date.now()}`;
+      localStorage.setItem('shadowboard_token', token);
+      localStorage.setItem('shadowboard_current_user', JSON.stringify(pending.user));
+
+      return {
+        message: '2FA Authentication successful.',
+        token,
+        user: pending.user
+      };
+    });
+  },
+
+  // Legacy direct login fallback
+  login: async (email, password) => {
+    return api.requestOtp(email, password);
   },
 
   register: async (userData) => {
-    return safeFetch(`${API_BASE}/register`, {
+    return safeFetch(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userData)
-    }, () => ({
-      message: 'Account created successfully (Client Demo Mode).',
-      token: MOCK_DEMO_TOKEN,
-      user: {
+    }, () => {
+      const users = getRegisteredUsers();
+      const existing = users.find((u) => u.email.toLowerCase() === userData.email.trim().toLowerCase());
+      if (existing) {
+        throw new Error('An account with this email address already exists. Please login instead.');
+      }
+
+      const newUser = {
         id: `usr_${Date.now()}`,
-        name: userData.name || 'Executive Director',
-        email: userData.email,
+        name: userData.name,
+        email: userData.email.trim(),
+        password: userData.password,
         organization: userData.organization || 'Enterprise AI Labs',
         role: userData.role || 'Executive Director'
-      }
-    }));
+      };
+
+      saveRegisteredUser(newUser);
+
+      // Auto-generate OTP for instant verification
+      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+      pendingOtps[newUser.email.toLowerCase()] = {
+        otp: otpCode,
+        user: { id: newUser.id, name: newUser.name, email: newUser.email, organization: newUser.organization, role: newUser.role }
+      };
+
+      return {
+        requiresOtp: true,
+        email: newUser.email,
+        otpHint: otpCode,
+        message: 'Account created successfully. Enter 6-digit OTP to complete registration.'
+      };
+    });
   },
 
   demoLogin: async () => {
     return safeFetch(`${API_BASE}/auth/demo-login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
-    }, () => ({
-      message: 'Demo executive login granted.',
-      token: MOCK_DEMO_TOKEN,
-      user: MOCK_DEMO_USER
-    }));
+    }, () => {
+      const token = MOCK_DEMO_TOKEN;
+      localStorage.setItem('shadowboard_token', token);
+      localStorage.setItem('shadowboard_current_user', JSON.stringify(MOCK_DEMO_USER));
+      return {
+        message: 'Demo executive login granted.',
+        token,
+        user: MOCK_DEMO_USER
+      };
+    });
   },
 
   getMe: async () => {
     return safeFetch(`${API_BASE}/auth/me`, {
       headers: getHeaders()
-    }, () => ({
-      user: MOCK_DEMO_USER
-    }));
+    }, () => {
+      try {
+        const storedUser = localStorage.getItem('shadowboard_current_user');
+        if (storedUser) return { user: JSON.parse(storedUser) };
+      } catch (e) {}
+      return { user: MOCK_DEMO_USER };
+    });
+  },
+
+  // GitHub Settings API
+  getGithubConfig: async () => {
+    return safeFetch(`${API_BASE}/settings/github`, {
+      headers: getHeaders()
+    }, () => getStoredGithubConfig());
+  },
+
+  saveGithubConfig: async (config) => {
+    return safeFetch(`${API_BASE}/settings/github`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(config)
+    }, () => {
+      const updated = { ...getStoredGithubConfig(), ...config, isConnected: true };
+      saveStoredGithubConfig(updated);
+      return { message: 'GitHub repository linked successfully.', config: updated };
+    });
+  },
+
+  // GitHub Repository Direct Commit Dispatcher
+  commitCampaignToGithubRepo: async (campaignData) => {
+    const ghConfig = getStoredGithubConfig();
+
+    // Always update local storage so local & live site update instantly
+    saveStoredCampaign(campaignData);
+
+    if (ghConfig && ghConfig.token && ghConfig.repo) {
+      try {
+        const [owner, repoName] = ghConfig.repo.includes('/')
+          ? ghConfig.repo.split('/')
+          : [ghConfig.username || 'ramcharan2122', ghConfig.repo];
+
+        const path = 'campaign.json';
+        const getUrl = `https://api.github.com/repos/${owner}/${repoName}/contents/${path}`;
+
+        // Get existing sha if file exists
+        let sha = null;
+        try {
+          const getRes = await fetch(getUrl, {
+            headers: { Authorization: `token ${ghConfig.token}`, Accept: 'application/vnd.github.v3+json' }
+          });
+          if (getRes.ok) {
+            const getData = await getRes.json();
+            sha = getData.sha;
+          }
+        } catch (e) {}
+
+        const contentEncoded = btoa(JSON.stringify(campaignData, null, 2));
+        const putRes = await fetch(getUrl, {
+          method: 'PUT',
+          headers: {
+            Authorization: `token ${ghConfig.token}`,
+            Accept: 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: `feat(shadowboard): deploy ${campaignData.title || 'campaign'} via ShadowBoard AI`,
+            content: contentEncoded,
+            ...(sha ? { sha } : {})
+          })
+        });
+
+        if (putRes.ok) {
+          return { status: 'COMMITTED', repository: `${owner}/${repoName}`, message: 'Campaign committed directly to GitHub repo!' };
+        }
+      } catch (err) {
+        console.warn('GitHub API commit warning:', err.message);
+      }
+    }
+
+    return { status: 'DISPATCHED', repository: ghConfig.repo || 'my-animated-website', message: 'Campaign dispatched to store!' };
   },
 
   // Simulations

@@ -6,6 +6,7 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [githubConfig, setGithubConfig] = useState({ username: 'ramcharan2122', repo: 'my-animated-website', isConnected: true });
 
   useEffect(() => {
     const token = localStorage.getItem('shadowboard_token');
@@ -16,26 +17,38 @@ export const AuthProvider = ({ children }) => {
         })
         .catch(() => {
           localStorage.removeItem('shadowboard_token');
+          localStorage.removeItem('shadowboard_current_user');
           setUser(null);
         })
         .finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
+
+    api.getGithubConfig()
+      .then((cfg) => {
+        if (cfg) setGithubConfig(cfg);
+      })
+      .catch((e) => console.warn('Error loading GH config:', e));
   }, []);
 
-  const login = async (email, password) => {
-    const res = await api.login(email, password);
+  const initiateLogin = async (email, password) => {
+    return await api.requestOtp(email, password);
+  };
+
+  const verifyOtp = async (email, otpCode) => {
+    const res = await api.verifyOtp(email, otpCode);
     localStorage.setItem('shadowboard_token', res.token);
     setUser(res.user);
     return res;
   };
 
+  const login = async (email, password) => {
+    return await initiateLogin(email, password);
+  };
+
   const register = async (userData) => {
-    const res = await api.register(userData);
-    localStorage.setItem('shadowboard_token', res.token);
-    setUser(res.user);
-    return res;
+    return await api.register(userData);
   };
 
   const demoLogin = async () => {
@@ -45,13 +58,33 @@ export const AuthProvider = ({ children }) => {
     return res;
   };
 
+  const saveGithubConfig = async (config) => {
+    const res = await api.saveGithubConfig(config);
+    setGithubConfig(res.config);
+    return res;
+  };
+
   const logout = () => {
     localStorage.removeItem('shadowboard_token');
+    localStorage.removeItem('shadowboard_current_user');
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, demoLogin, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        initiateLogin,
+        verifyOtp,
+        register,
+        demoLogin,
+        logout,
+        githubConfig,
+        saveGithubConfig
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

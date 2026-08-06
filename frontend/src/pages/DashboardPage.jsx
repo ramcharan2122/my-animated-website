@@ -7,7 +7,7 @@ import { LiveDebateFeed } from '../components/boardroom/LiveDebateFeed';
 import { useSimulation } from '../context/SimulationContext';
 import { api } from '../services/api';
 import { motion } from 'framer-motion';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Github } from 'lucide-react';
 
 export const DashboardPage = () => {
   const { currentSimulation } = useSimulation();
@@ -28,7 +28,7 @@ export const DashboardPage = () => {
                 BOARDROOM DECISION READY FOR REAL-TIME EXECUTION
               </div>
               <div className="text-[11px] text-slate-950 font-bold">
-                Deploy strategy directly to live Demo Store ("Lumina Tech & Lifestyle")
+                Deploy strategy directly to live store & connected GitHub repository
               </div>
             </div>
           </div>
@@ -40,7 +40,6 @@ export const DashboardPage = () => {
             onClick={async () => {
               try {
                 const goal = currentSimulation.simulation?.goal || 'Special Sale';
-                // Helper parser
                 const text = goal.toLowerCase();
                 const discountMatch = text.match(/(\d+)\s*%/);
                 const discountPercentage = discountMatch ? parseInt(discountMatch[1]) : 40;
@@ -77,22 +76,26 @@ export const DashboardPage = () => {
                   occasionKey = 'seasonal';
                 }
 
-                await api.deployCampaign({
+                const campaignData = {
                   title,
                   discountPercentage,
                   promoCode,
                   bannerText: `SPECIAL CELEBRATION • ${discountPercentage}% OFF ACROSS ALL CATEGORIES!`,
                   marketingSpend: currentSimulation.simulation?.marketing_spend || '₹50 Lakhs',
                   occasionKey
-                });
+                };
+
+                await api.deployCampaign(campaignData);
+                await api.commitCampaignToGithubRepo(campaignData);
               } catch (e) {
                 console.warn(e);
               }
             }}
             className="px-5 py-2.5 rounded-xl bg-black text-amber-300 font-extrabold text-xs shadow-xl hover:bg-slate-900 transition-all shrink-0 flex items-center gap-2"
           >
+            <Github className="w-4 h-4 text-cyan-400" />
             <Sparkles className="w-4 h-4 text-amber-400" />
-            <span>🚀 DEPLOY TO LIVE DEMO STORE</span>
+            <span>🚀 DEPLOY TO LIVE STORE & LINKED GITHUB REPO</span>
           </a>
         </motion.div>
       )}
