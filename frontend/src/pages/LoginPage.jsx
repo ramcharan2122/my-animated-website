@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { Sparkles, Lock, Mail, ArrowRight, ShieldCheck, Cpu, KeyRound, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Lock, Mail, ArrowRight, ShieldCheck, Cpu, KeyRound, CheckCircle2, Github } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const LoginPage = () => {
-  const { initiateLogin, verifyOtp, demoLogin } = useAuth();
+  const { initiateLogin, verifyOtp, demoLogin, loginWithGithub } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
@@ -13,6 +13,7 @@ export const LoginPage = () => {
   const [otpStep, setOtpStep] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [generatedOtpHint, setGeneratedOtpHint] = useState('');
+  const [isRealEmailSent, setIsRealEmailSent] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -23,7 +24,8 @@ export const LoginPage = () => {
     try {
       const res = await initiateLogin(email, password);
       if (res.requiresOtp) {
-        setGeneratedOtpHint(res.otpHint);
+        setGeneratedOtpHint(res.otpHint || '');
+        setIsRealEmailSent(res.isRealEmailSent || false);
         setOtpStep(true);
       }
     } catch (err) {
@@ -43,6 +45,16 @@ export const LoginPage = () => {
     } catch (err) {
       setError(err.message);
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGithubLogin = async () => {
+    setLoading(true);
+    try {
+      await loginWithGithub();
+    } catch (err) {
+      setError(err.message);
       setLoading(false);
     }
   };
@@ -82,7 +94,7 @@ export const LoginPage = () => {
 
           <h2 className="text-lg font-bold text-white mb-6 text-center flex items-center justify-center gap-2">
             <ShieldCheck className="w-5 h-5 text-cyan-400" />
-            <span>{otpStep ? '2FA OTP Verification' : 'Executive Authentication'}</span>
+            <span>{otpStep ? '2FA Email OTP Verification' : 'Executive Authentication'}</span>
           </h2>
 
           {error && (
@@ -91,22 +103,23 @@ export const LoginPage = () => {
             </div>
           )}
 
-          {/* Generated Security OTP Notification Banner */}
-          {otpStep && generatedOtpHint && (
-            <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-purple-500/20 to-cyan-500/20 border border-amber-500/40 text-center space-y-1 shadow-lg animate-pulse">
+          {/* Real Email OTP Notification Banner */}
+          {otpStep && (
+            <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-purple-500/20 to-cyan-500/20 border border-amber-500/40 text-center space-y-1 shadow-lg">
               <div className="text-[10px] font-mono text-amber-300 font-bold uppercase tracking-wider flex items-center justify-center gap-1.5">
                 <KeyRound className="w-4 h-4 text-amber-400" />
-                SECURITY 2FA CODE GENERATED
+                {isRealEmailSent ? 'REAL EMAIL OTP DISPATCHED' : 'SECURITY 2FA CODE GENERATED'}
               </div>
-              <p className="text-xs text-slate-300 font-mono">
-                Your 6-Digit Verification OTP Code is:
+              <p className="text-xs text-slate-200 font-mono">
+                {isRealEmailSent
+                  ? `Real 6-digit OTP code dispatched to your email inbox (${email}). Please check your inbox.`
+                  : 'Your 6-Digit Verification OTP Code is:'}
               </p>
-              <div className="text-2xl font-black font-mono text-white tracking-widest text-cyan-300 pt-1">
-                {generatedOtpHint}
-              </div>
-              <p className="text-[10px] text-slate-400 font-mono">
-                Sent to <span className="text-white">{email}</span>
-              </p>
+              {generatedOtpHint && (
+                <div className="text-2xl font-black font-mono text-white tracking-widest text-cyan-300 pt-1">
+                  {generatedOtpHint}
+                </div>
+              )}
             </div>
           )}
 
@@ -156,8 +169,19 @@ export const LoginPage = () => {
                   disabled={loading}
                   className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-500 font-bold text-xs text-white shadow-xl hover:opacity-90 transition-all flex items-center justify-center gap-2"
                 >
-                  <span>Verify Credentials & Send OTP</span>
+                  <span>Verify Credentials & Send Real Email OTP</span>
                   <ArrowRight className="w-4 h-4" />
+                </button>
+
+                {/* Real GitHub OAuth Login Button */}
+                <button
+                  type="button"
+                  onClick={handleGithubLogin}
+                  disabled={loading}
+                  className="w-full py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono font-bold text-white hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
+                >
+                  <Github className="w-4 h-4 text-cyan-400" />
+                  <span>Sign In with Real GitHub Account</span>
                 </button>
               </motion.form>
             ) : (
@@ -192,7 +216,7 @@ export const LoginPage = () => {
                   className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-500 font-bold text-xs text-white shadow-xl hover:opacity-90 transition-all flex items-center justify-center gap-2"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Submit OTP & Authenticate Session</span>
+                  <span>Submit Email OTP & Authenticate Session</span>
                 </button>
 
                 <button

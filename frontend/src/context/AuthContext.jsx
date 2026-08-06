@@ -47,6 +47,10 @@ export const AuthProvider = ({ children }) => {
     return await initiateLogin(email, password);
   };
 
+  const loginWithGithub = async () => {
+    return await api.signInWithGithub();
+  };
+
   const register = async (userData) => {
     return await api.register(userData);
   };
@@ -78,6 +82,7 @@ export const AuthProvider = ({ children }) => {
         login,
         initiateLogin,
         verifyOtp,
+        loginWithGithub,
         register,
         demoLogin,
         logout,
