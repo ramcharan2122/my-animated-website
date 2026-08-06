@@ -6,7 +6,7 @@ const AGENT_DEFINITIONS = [
     name: 'Aura-X (CEO)',
     title: 'Chief Executive Officer',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
-    color: '#6366f1', // Indigo
+    color: '#6366f1',
     focus: 'Overall Corporate Strategy, Capital Allocation & Multi-Agent Synthesis'
   },
   {
@@ -14,7 +14,7 @@ const AGENT_DEFINITIONS = [
     name: 'Nexus (Market Intel)',
     title: 'VP of Market Intelligence',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80',
-    color: '#06b6d4', // Cyan
+    color: '#06b6d4',
     focus: 'TAM/SAM Analysis, Competitive Moats & Regional Dynamics'
   },
   {
@@ -22,7 +22,7 @@ const AGENT_DEFINITIONS = [
     name: 'Vanguard (CFO)',
     title: 'Chief Financial Officer',
     avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80',
-    color: '#10b981', // Emerald
+    color: '#10b981',
     focus: 'CapEx Efficiency, Runway, Financial Modeling & IRR'
   },
   {
@@ -30,7 +30,7 @@ const AGENT_DEFINITIONS = [
     name: 'Apex (Ops)',
     title: 'Chief Operating Officer',
     avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80',
-    color: '#f59e0b', // Amber
+    color: '#f59e0b',
     focus: 'Supply Chain, Scalability, Site Selection & Vendor Logistics'
   },
   {
@@ -38,7 +38,7 @@ const AGENT_DEFINITIONS = [
     name: 'Hyperion (CMO)',
     title: 'Chief Marketing Officer',
     avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=300&q=80',
-    color: '#ec4899', // Pink
+    color: '#ec4899',
     focus: 'Customer Acquisition (CAC), Brand Equity & Digital Expansion'
   },
   {
@@ -46,7 +46,7 @@ const AGENT_DEFINITIONS = [
     name: 'Synergy (HR)',
     title: 'Chief People Officer',
     avatar: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?auto=format&fit=crop&w=300&q=80',
-    color: '#8b5cf6', // Purple
+    color: '#8b5cf6',
     focus: 'Executive Hiring, Organizational Culture & Regional Talent'
   },
   {
@@ -54,7 +54,7 @@ const AGENT_DEFINITIONS = [
     name: 'Aegis (Legal)',
     title: 'General Counsel',
     avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=300&q=80',
-    color: '#64748b', // Slate
+    color: '#64748b',
     focus: 'Regulatory Compliance, Municipal Licensing & IP Security'
   },
   {
@@ -62,7 +62,7 @@ const AGENT_DEFINITIONS = [
     name: 'Quant (Analytics)',
     title: 'Chief Data Officer',
     avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=300&q=80',
-    color: '#3b82f6', // Blue
+    color: '#3b82f6',
     focus: 'Cohort Analytics, LTV Predictions & Data Pipeline Architecture'
   },
   {
@@ -70,7 +70,7 @@ const AGENT_DEFINITIONS = [
     name: 'Sentinel (Risk)',
     title: 'Chief Risk Officer',
     avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=300&q=80',
-    color: '#ef4444', // Red
+    color: '#ef4444',
     focus: 'Black Swan Threat Vectors, Downside Protection & Regulatory Exposure'
   }
 ];
@@ -89,7 +89,6 @@ export async function runBoardroomSimulation({ goal, budget, timeline, location,
     }
   }
 
-  // Out of box synthetic high-level multi-agent boardroom generator
   return generateSyntheticBoardroomSimulation({ goal, budget, timeline, location, employees, marketingSpend });
 }
 
@@ -101,7 +100,7 @@ async function executeGeminiSimulation({ goal, budget, timeline, location, emplo
 You are the Autonomous Executive Board of ShadowBoard Enterprise AI.
 Objective: "${goal}"
 Parameters:
-- Budget: ${budget || '₹2 Crore ($250k equivalent)'}
+- Budget: ${budget || '₹2 Crore'}
 - Timeline: ${timeline || '6 Months'}
 - Target Location: ${location || 'Bangalore, India'}
 - Staff Allocation: ${employees || 25} Employees
@@ -118,49 +117,45 @@ You will simulate 9 distinct executive autonomous agents:
 8. Analytics: LTV/CAC ratios, forecast models, KPI tracking.
 9. Risk: Threat matrix, downside risks, mitigation strategies.
 
+IMPORTANT: Ensure AT LEAST 6 to 8 distinct agents actively participate in the debate_logs with challenges, counter-arguments, and strategic compromises!
+If analyzing a sale or promotion, analyze individual product unit margins and format promotional banners as "UP TO X% OFF" with variable product-level discounts instead of a flat discount across all items.
+
 Return ONLY a valid JSON object matching this structure:
 {
-  "ceo_plan": "Short executive plan outline...",
+  "ceo_plan": "Executive strategy outline...",
   "agent_decisions": [
     {
       "agent_key": "ceo|market_intel|cfo|ops|cmo|hr|legal|analytics|risk",
       "agent_name": "Full Agent Name",
       "role_title": "Role Title",
       "confidence": 92,
-      "reasoning": "Detailed 2-3 sentence strategic reasoning...",
-      "decision": "Concrete action step or mandate..."
+      "reasoning": "Detailed strategic reasoning...",
+      "decision": "Concrete action step..."
     }
   ],
   "debate_logs": [
     {
-      "speaker_key": "cfo",
-      "speaker_name": "Vanguard (CFO)",
-      "speaker_role": "Chief Financial Officer",
-      "target_key": "cmo",
-      "message": "Direct challenge or counter-argument regarding budget, CAC, or execution risk...",
+      "speaker_key": "cfo|cmo|ops|market_intel|analytics|risk|legal|ceo",
+      "speaker_name": "Speaker Agent Name",
+      "speaker_role": "Speaker Role",
+      "target_key": "target_agent_key",
+      "message": "Dynamic debate challenge or rebuttal...",
       "debate_type": "challenge|rebuttal|agreement|synthesis"
     }
   ],
-  "executive_summary": "Comprehensive 3-paragraph executive summary...",
-  "roi_projection": "285% in 24 months",
-  "risk_score": 38,
+  "executive_summary": "Comprehensive executive summary...",
+  "roi_projection": "310% IRR",
+  "risk_score": 24,
   "budget_breakdown": [
-    { "category": "Operations & Facilities", "amount": "₹70 L", "percentage": 35 },
-    { "category": "Marketing & CAC", "amount": "₹50 L", "percentage": 25 },
-    { "category": "Talent & Payroll", "amount": "₹45 L", "percentage": 22.5 },
-    { "category": "Legal & Contingency", "amount": "₹35 L", "percentage": 17.5 }
+    { "category": "Category", "amount": "₹50 L", "percentage": 25 }
   ],
   "department_highlights": [
-    { "department": "Finance", "status": "Approved", "metric": "+34% IRR" },
-    { "department": "Operations", "status": "Ready", "metric": "3 Prime Sites Identified" },
-    { "department": "Marketing", "status": "Optimized", "metric": "Target CAC ₹4,200" }
+    { "department": "Finance", "status": "Approved", "metric": "+34% Net Margin" }
   ],
   "milestones": [
-    { "phase": "Month 1-2", "title": "Licensing & Site Selection", "detail": "Secure Indiranagar & Koramangala flagship leases." },
-    { "phase": "Month 3-4", "title": "Staff Onboarding & Supply Chain", "detail": "Recruit 25 core staff & lock vendor SLA agreements." },
-    { "phase": "Month 5-6", "title": "Grand Launch & Campaign Execution", "detail": "Initiate multi-channel campaign & open doors." }
+    { "phase": "Month 1-2", "title": "Phase Title", "detail": "Phase Detail" }
   ],
-  "final_recommendation": "Decisive recommendation from the CEO..."
+  "final_recommendation": "Final recommendation..."
 }
 `;
 
@@ -172,168 +167,146 @@ Return ONLY a valid JSON object matching this structure:
 export function extractCampaignInfo(goal = '') {
   const text = goal.toLowerCase();
   const explicitMatch = text.match(/(\d+)\s*%/);
-  const discountPercentage = explicitMatch ? parseInt(explicitMatch[1]) : 35;
-  const isAutonomousDiscount = !explicitMatch;
+  const userSpecifiedPct = explicitMatch ? parseInt(explicitMatch[1]) : null;
+
+  let maxDiscount = userSpecifiedPct || 55;
+  if (!userSpecifiedPct) {
+    if (text.includes('black friday')) maxDiscount = 65;
+    else if (text.includes('dussehra') || text.includes('dasara')) maxDiscount = 55;
+    else if (text.includes('christmas') || text.includes('xmas')) maxDiscount = 50;
+    else if (text.includes('new year')) maxDiscount = 60;
+    else if (text.includes('diwali') || text.includes('deepavali')) maxDiscount = 58;
+    else if (text.includes('clearance')) maxDiscount = 70;
+  }
+
+  // Per-product variable discounts calculated dynamically
+  const productDiscounts = {
+    p1: Math.max(20, Math.round(maxDiscount * 0.65)), // AR Glasses (High cost, premium margin -> 35-40% off)
+    p2: Math.max(25, Math.round(maxDiscount * 0.80)), // Headphones (Mid margin -> 40-45% off)
+    p3: maxDiscount,                                    // Smart Watch (High volume inventory driver -> UP TO MAX % off)
+    p4: Math.max(25, Math.round(maxDiscount * 0.88))  // Smart Home Hub (High demand -> 45-50% off)
+  };
+
+  let title = '⚡ SEASONAL FESTIVAL SALE';
+  let emoji = '⚡';
+  let occasionKey = 'seasonal';
 
   if (text.includes('dussehra') || text.includes('dasara')) {
-    return {
-      title: '🏹 DUSSEHRA FESTIVAL CELEBRATION',
-      emoji: '🏹',
-      occasionKey: 'dussehra',
-      discountPercentage,
-      isAutonomousDiscount,
-      promoCode: `DUSSEHRA-${isAutonomousDiscount ? 'PROFIT35' : 'SHADOW' + discountPercentage}`,
-      bannerText: `VICTORY CELEBRATIONS • UP TO ${discountPercentage}% OFF ACROSS ALL TECH CATEGORIES!`
-    };
+    title = '🏹 DUSSEHRA FESTIVAL CELEBRATION';
+    emoji = '🏹';
+    occasionKey = 'dussehra';
+  } else if (text.includes('christmas') || text.includes('xmas')) {
+    title = '🎄 CHRISTMAS HOLIDAY SALE';
+    emoji = '🎄';
+    occasionKey = 'christmas';
+  } else if (text.includes('black friday')) {
+    title = '🛍️ BLACK FRIDAY CYBER SALE';
+    emoji = '🛍️';
+    occasionKey = 'blackfriday';
+  } else if (text.includes('new year')) {
+    title = '🎆 NEW YEAR CELEBRATION SALE';
+    emoji = '🎆';
+    occasionKey = 'newyear';
+  } else if (text.includes('diwali') || text.includes('deepavali')) {
+    title = '🪔 DIWALI FESTIVAL OF LIGHTS SALE';
+    emoji = '🪔';
+    occasionKey = 'diwali';
   }
 
-  if (text.includes('christmas') || text.includes('xmas')) {
-    return {
-      title: '🎄 CHRISTMAS HOLIDAY SALE',
-      emoji: '🎄',
-      occasionKey: 'christmas',
-      discountPercentage,
-      isAutonomousDiscount,
-      promoCode: `XMAS-${isAutonomousDiscount ? 'PROFIT35' : 'SHADOW' + discountPercentage}`,
-      bannerText: `WINTER WONDERLAND SPECIAL • ENJOY ${discountPercentage}% SAVINGS ON SPATIAL TECH!`
-    };
-  }
-
-  if (text.includes('black friday')) {
-    return {
-      title: '🛍️ BLACK FRIDAY CYBER SALE',
-      emoji: '🛍️',
-      occasionKey: 'blackfriday',
-      discountPercentage,
-      isAutonomousDiscount,
-      promoCode: `BLACKFRIDAY-${isAutonomousDiscount ? 'PROFIT35' : 'SHADOW' + discountPercentage}`,
-      bannerText: `EXCLUSIVE FLASH DEALS • FLAT ${discountPercentage}% OFF STOREWIDE!`
-    };
-  }
-
-  if (text.includes('new year')) {
-    return {
-      title: '🎆 NEW YEAR CELEBRATION SALE',
-      emoji: '🎆',
-      occasionKey: 'newyear',
-      discountPercentage,
-      isAutonomousDiscount,
-      promoCode: `NEWYEAR-${isAutonomousDiscount ? 'PROFIT35' : 'SHADOW' + discountPercentage}`,
-      bannerText: `WELCOME THE NEW YEAR • ${discountPercentage}% OFF ON NEXT-GEN HARDWARE!`
-    };
-  }
-
-  if (text.includes('diwali') || text.includes('deepavali')) {
-    return {
-      title: '🪔 DIWALI FESTIVAL OF LIGHTS SALE',
-      emoji: '🪔',
-      occasionKey: 'diwali',
-      discountPercentage,
-      isAutonomousDiscount,
-      promoCode: `DIWALI-${isAutonomousDiscount ? 'PROFIT35' : 'SHADOW' + discountPercentage}`,
-      bannerText: `FESTIVAL OF LIGHTS CELEBRATION • ENJOY ${discountPercentage}% OFF STOREWIDE!`
-    };
-  }
-
-  const saleMatch = goal.match(/(?:launch|run|start|create)?\s*(?:a|an)?\s*([a-zA-Z0-9\s]+(?:sale|campaign|offer|discount|promo))/i);
-  const detectedName = saleMatch ? saleMatch[1].trim().toUpperCase() : 'SEASONAL FESTIVAL SALE';
-  const cleanCodeName = detectedName.replace(/[^A-Z0-9]/g, '').substring(0, 10);
+  const cleanCodeName = title.replace(/[^A-Z]/g, '').substring(0, 8);
 
   return {
-    title: `⚡ ${detectedName}`,
-    emoji: '⚡',
-    occasionKey: 'seasonal',
-    discountPercentage,
-    isAutonomousDiscount,
-    promoCode: `${cleanCodeName}-${isAutonomousDiscount ? 'PROFIT35' : discountPercentage}`,
-    bannerText: `SPECIAL SEASONAL OFFER • ${discountPercentage}% OFF ALL HARDWARE!`
+    title,
+    emoji,
+    occasionKey,
+    maxDiscount,
+    discountPercentage: maxDiscount,
+    productDiscounts,
+    promoCode: `${cleanCodeName}-UPTO${maxDiscount}`,
+    bannerText: `FESTIVE SPECIAL OFFER • UP TO ${maxDiscount}% OFF ACROSS ALL TECH CATEGORIES!`
   };
 }
 
 function generateSyntheticBoardroomSimulation({ goal, budget, timeline, location, employees, marketingSpend }) {
-  const parsedBudget = budget || '₹2 Crore';
-  const parsedLoc = location || 'Bangalore';
-  const parsedTime = timeline || '6 Months';
-  const parsedStaff = employees || 25;
-  const parsedMkt = marketingSpend || '₹50 Lakhs';
-
   const campaignInfo = extractCampaignInfo(goal);
+  const maxDisc = campaignInfo.maxDiscount;
+  const pDiscounts = campaignInfo.productDiscounts;
 
   return {
     campaign_info: campaignInfo,
-    ceo_plan: `Formulate an autonomous profit-optimized strategy for "${goal}". CFO & Analytics conducted price elasticity modeling across product catalog to compute the optimal discount.`,
+    ceo_plan: `Formulate an autonomous profit-optimized strategy for "${goal}". CFO, Quant Analytics & Market Intel conducted price elasticity modeling across product catalog to compute variable discounts up to ${maxDisc}% Off.`,
     agent_decisions: [
       {
         agent_key: 'ceo',
         agent_name: 'Aura-X (CEO)',
         role_title: 'Chief Executive Officer',
         confidence: 96,
-        reasoning: `Goal: "${goal}". No arbitrary discount specified by user. Mandated CFO and Quant Analytics to calculate profit-maximizing price curve. Board approved ${campaignInfo.discountPercentage}% discount.`,
-        decision: `APPROVED: Authorize ${campaignInfo.title} at board-calculated ${campaignInfo.discountPercentage}% discount using coupon ${campaignInfo.promoCode}.`
+        reasoning: `Mandated CFO, CMO & Quant Analytics to analyze catalog unit margins. Board approved variable per-product discounts branded as UP TO ${maxDisc}% OFF.`,
+        decision: `APPROVED: Authorize ${campaignInfo.title} with headline UP TO ${maxDisc}% OFF using promo code ${campaignInfo.promoCode}.`
+      },
+      {
+        agent_key: 'market_intel',
+        agent_name: 'Nexus (Market Intel)',
+        role_title: 'VP of Market Intelligence',
+        confidence: 93,
+        reasoning: `Competitor benchmarking shows 50-60% headlines drive 3.2x higher CTR. Offering UP TO ${maxDisc}% OFF positions us as price leader in high-growth segments.`,
+        decision: `TARGET HIGH-INTENT BUYER COHORTS`
       },
       {
         agent_key: 'cfo',
         agent_name: 'Vanguard (CFO)',
         role_title: 'Chief Financial Officer',
         confidence: 94,
-        reasoning: `Catalog Unit Economics Analysis: Average COGS is 56.5% (43.5% gross margin). A 50%+ discount erodes net profit. A ${campaignInfo.discountPercentage}% discount maximizes conversion velocity while guaranteeing +28.5% net profit margin!`,
-        decision: `Set discount cap strictly at ${campaignInfo.discountPercentage}%. Projected Net Revenue: +310% with zero margin risk.`
-      },
-      {
-        agent_key: 'analytics',
-        agent_name: 'Quant (Analytics)',
-        role_title: 'Chief Data Officer',
-        confidence: 97,
-        reasoning: `Price Elasticity Model: Demand curve peaks at ${campaignInfo.discountPercentage}% off. Lower discounts yield inadequate volume; higher discounts diminish net return.`,
-        decision: `Deploy algorithmic pricing engine with real-time margin tracking.`
-      },
-      {
-        agent_key: 'market_intel',
-        agent_name: 'Nexus (Market Intel)',
-        role_title: 'VP of Market Intelligence',
-        confidence: 92,
-        reasoning: `Competitor benchmarking shows 30-35% is the sweet spot for consumer trust and impulse conversion during seasonal events.`,
-        decision: `Target high-intent buyer segments via digital channels.`
-      },
-      {
-        agent_key: 'cmo',
-        agent_name: 'Hyperion (CMO)',
-        role_title: 'Chief Marketing Officer',
-        confidence: 93,
-        reasoning: `Positioning ${campaignInfo.discountPercentage}% OFF with headline "${campaignInfo.bannerText}" creates urgent buyer demand without cheapening brand equity.`,
-        decision: `Deploy live store campaign using promo code ${campaignInfo.promoCode}.`
+        reasoning: `Catalog Unit Margin Modeling: Flat discounts erode gross profit. Variable discounts (${pDiscounts.p1}% on AR Glasses, ${pDiscounts.p3}% on Smart Watches) preserve +31.5% net margin overall!`,
+        decision: `CAP MAXIMUM DISCOUNT AT ${maxDisc}% WITH VARIABLE PRODUCT SLOTS`
       },
       {
         agent_key: 'ops',
         agent_name: 'Apex (Ops)',
         role_title: 'Chief Operating Officer',
         confidence: 91,
-        reasoning: `Inventory levels across catalog are sufficient to support 3.8x baseline volume at ${campaignInfo.discountPercentage}% discount.`,
-        decision: `Reserve safety stock allocations at regional fulfillment centers.`
+        reasoning: `Smart Watch inventory is at 140% baseline. Discounting it at peak ${maxDisc}% accelerates warehouse turnover while AR Glasses stay protected at ${pDiscounts.p1}%.`,
+        decision: `INVENTORY REALLOCATION COMPLETE`
+      },
+      {
+        agent_key: 'cmo',
+        agent_name: 'Hyperion (CMO)',
+        role_title: 'Chief Marketing Officer',
+        confidence: 95,
+        reasoning: `Headline banner formatted as "UP TO ${maxDisc}% OFF" generates maximum urgency without cheapening core brand equity.`,
+        decision: `LAUNCH DIGITAL CAMPAIGN WITH CODE ${campaignInfo.promoCode}`
       },
       {
         agent_key: 'hr',
         agent_name: 'Synergy (HR)',
         role_title: 'Chief People Officer',
         confidence: 89,
-        reasoning: `Support personnel prepped for surge volume management during peak campaign hours.`,
-        decision: `Schedule round-the-clock customer support coverage.`
+        reasoning: `Customer success & logistics support teams scheduled for 24/7 coverage during surge checkout hours.`,
+        decision: `SURGE STAFFING AUTHORIZED`
       },
       {
         agent_key: 'legal',
         agent_name: 'Aegis (Legal)',
         role_title: 'General Counsel',
-        confidence: 94,
-        reasoning: `Verified compliance for automated promotional pricing and coupon application terms.`,
-        decision: `Approve digital terms & conditions.`
+        confidence: 95,
+        reasoning: `Promotional compliance verified: Using "UP TO ${maxDisc}% OFF" strictly complies with consumer protection laws as item p3 reaches the advertised max discount.`,
+        decision: `LEGAL COMPLIANCE CERTIFIED`
+      },
+      {
+        agent_key: 'analytics',
+        agent_name: 'Quant (Analytics)',
+        role_title: 'Chief Data Officer',
+        confidence: 96,
+        reasoning: `Price Elasticity Curve: Variable product-level pricing generates +310% revenue lift compared to a flat discount strategy.`,
+        decision: `REAL-TIME TELEMETRY TRACKING ONLINE`
       },
       {
         agent_key: 'risk',
         agent_name: 'Sentinel (Risk)',
         role_title: 'Chief Risk Officer',
         confidence: 90,
-        reasoning: `Risk index managed at 24/100 due to profit-margin safety buffer built into the ${campaignInfo.discountPercentage}% discount.`,
-        decision: `Implement per-customer purchasing limits to block reseller arbitrage.`
+        reasoning: `Downside risk score managed down to 22/100 by enforcing per-user quantity caps on max-discounted inventory items.`,
+        decision: `ANTI-RESELLER CAPS ENFORCED`
       }
     ],
     debate_logs: [
@@ -342,7 +315,7 @@ function generateSyntheticBoardroomSimulation({ goal, budget, timeline, location
         speaker_name: 'Vanguard (CFO)',
         speaker_role: 'Chief Financial Officer',
         target_key: 'cmo',
-        message: `Hyperion, if we run a 50% discount without cart thresholds, our net margin drops to +8.5%. By capping at ${campaignInfo.discountPercentage}%, we maintain a robust +28.5% net margin while driving 3.8x volume!`,
+        message: `Hyperion, a flat ${maxDisc}% discount storewide will collapse gross margin on Lumina AR Glasses to single digits! We must use variable product-level discounts.`,
         debate_type: 'challenge'
       },
       {
@@ -350,35 +323,67 @@ function generateSyntheticBoardroomSimulation({ goal, budget, timeline, location
         speaker_name: 'Hyperion (CMO)',
         speaker_role: 'Chief Marketing Officer',
         target_key: 'cfo',
-        message: `Agreed Vanguard. A ${campaignInfo.discountPercentage}% discount is strong enough to trigger consumer purchase intent without compromising our premium brand positioning.`,
+        message: `I agree on variable pricing, Vanguard, but our ad creatives need a strong headline! If we discount Cyber Chrono Smart Watch at ${maxDisc}%, can we advertise the campaign as 'UP TO ${maxDisc}% OFF'?`,
         debate_type: 'rebuttal'
+      },
+      {
+        speaker_key: 'analytics',
+        speaker_name: 'Quant (Analytics)',
+        speaker_role: 'Chief Data Officer',
+        target_key: 'cfo',
+        message: `Elasticity telemetry confirms CMO's approach: 'UP TO ${maxDisc}% OFF' increases click-through rate by 64% while maintaining overall blended gross margin at +31.5%.`,
+        debate_type: 'agreement'
+      },
+      {
+        speaker_key: 'ops',
+        speaker_name: 'Apex (Ops)',
+        speaker_role: 'Chief Operating Officer',
+        target_key: 'cmo',
+        message: `From an operational standpoint, Smart Watch inventory is overstocked. Putting the peak ${maxDisc}% discount on item p3 solves our warehouse capacity issue.`,
+        debate_type: 'agreement'
+      },
+      {
+        speaker_key: 'risk',
+        speaker_name: 'Sentinel (Risk)',
+        speaker_role: 'Chief Risk Officer',
+        target_key: 'ops',
+        message: `However, offering ${maxDisc}% off on Smart Watches risks reseller arbitrage. We must limit checkout quantity to 2 units per customer.`,
+        debate_type: 'challenge'
+      },
+      {
+        speaker_key: 'legal',
+        speaker_name: 'Aegis (Legal)',
+        speaker_role: 'General Counsel',
+        target_key: 'cmo',
+        message: `Legal clearance granted: Advertising 'UP TO ${maxDisc}% OFF' is fully compliant since at least 25% of catalog items meet or reach the advertised discount rate.`,
+        debate_type: 'agreement'
       },
       {
         speaker_key: 'ceo',
         speaker_name: 'Aura-X (CEO)',
         speaker_role: 'Chief Executive Officer',
         target_key: 'all',
-        message: `BOARD RESOLUTION: Deploy ${campaignInfo.title} at board-calculated optimal ${campaignInfo.discountPercentage}% discount. Promo code ${campaignInfo.promoCode} authorized for live store execution!`,
+        message: `BOARD RESOLUTION PASSED: Launch ${campaignInfo.title} featuring variable product discounts UP TO ${maxDisc}% OFF. Promo code ${campaignInfo.promoCode} authorized for immediate store deployment!`,
         debate_type: 'synthesis'
       }
     ],
-    executive_summary: `ShadowBoard Enterprise AI evaluated the prompt ("${goal}"). Since no explicit discount was provided, the CFO and Quant Analytics executed a price elasticity & profit-margin analysis across product catalog unit economics. The board determined that a ${campaignInfo.discountPercentage}% discount rate is the optimal equilibrium — maximizing sales volume (3.8x lift) while guaranteeing a net profit margin of +28.5%.`,
+    executive_summary: `ShadowBoard AI analyzed "${goal}". CFO, Quant Analytics, and CMO executed product-level unit margin & price elasticity modeling. Rather than an arbitrary flat discount, the board formulated a dynamic pricing strategy featuring variable discounts per product (ranging from ${pDiscounts.p1}% to ${maxDisc}%), prominently formatted as "UP TO ${maxDisc}% OFF".`,
     roi_projection: '310% (Optimal Campaign IRR)',
-    risk_score: 24,
+    risk_score: 22,
     budget_breakdown: [
-      { category: 'Digital CAC & Growth Ads', amount: '₹25 Lakhs', percentage: 50 },
+      { category: 'Digital Growth & Acquisition Ads', amount: '₹25 Lakhs', percentage: 50 },
       { category: 'Profit-Safe Discount Buffer', amount: '₹15 Lakhs', percentage: 30 },
       { category: 'Fulfillment & Logistics Capacity', amount: '₹10 Lakhs', percentage: 20 }
     ],
     department_highlights: [
-      { department: 'Finance (CFO)', status: 'Optimal', metric: '+28.5% Net Margin Lock' },
-      { department: 'Analytics (CDO)', status: 'Simulated', metric: `Elasticity Peak at ${campaignInfo.discountPercentage}%` },
-      { department: 'Marketing (CMO)', status: 'Active', metric: `${campaignInfo.promoCode} Authorized` }
+      { department: 'Finance (CFO)', status: 'Approved', metric: '+31.5% Blended Net Margin' },
+      { department: 'Analytics (CDO)', status: 'Validated', metric: `Price Elasticity Peak at ${maxDisc}%` },
+      { department: 'Marketing (CMO)', status: 'Active', metric: `UP TO ${maxDisc}% OFF Banner Live` }
     ],
     milestones: [
-      { phase: 'Immediate', title: 'Live Store Dynamic Campaign Dispatch', detail: `Deploy ${campaignInfo.title} with optimal ${campaignInfo.discountPercentage}% discount and promo code ${campaignInfo.promoCode}.` },
-      { phase: 'Real-Time', title: 'Telemetry & Unit Margin Monitoring', detail: `Track checkout conversions to ensure net margin stays above target +25%.` }
+      { phase: 'Immediate', title: 'Live Store Dynamic Campaign Dispatch', detail: `Deploy ${campaignInfo.title} with UP TO ${maxDisc}% OFF banner and code ${campaignInfo.promoCode}.` },
+      { phase: 'Real-Time', title: 'Telemetry & Margin Protection', detail: `Monitor checkout conversions to guarantee blended net margin stays above target +25%.` }
     ],
-    final_recommendation: `AUTONOMOUS BOARD DECISION: Execute ${campaignInfo.title} at the board-computed optimal ${campaignInfo.discountPercentage}% discount rate.`
+    final_recommendation: `AUTONOMOUS BOARD DECISION: Execute ${campaignInfo.title} with variable product discounts UP TO ${maxDisc}% OFF.`
   };
 }

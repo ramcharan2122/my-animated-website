@@ -142,15 +142,22 @@ export const DemoStorePage = () => {
     }
   ];
 
-  const discountRate = campaign.isActive ? (campaign.discountPercentage || 35) : 0;
+  const maxDiscount = campaign.isActive ? (campaign.maxDiscount || campaign.discountPercentage || 55) : 0;
+  const productDiscounts = (campaign.isActive && campaign.productDiscounts) ? campaign.productDiscounts : {
+    p1: Math.max(20, Math.round(maxDiscount * 0.65)),
+    p2: Math.max(25, Math.round(maxDiscount * 0.80)),
+    p3: maxDiscount,
+    p4: Math.max(25, Math.round(maxDiscount * 0.88))
+  };
 
   const handleAddToCart = (product) => {
+    const itemDiscount = campaign.isActive ? (productDiscounts[product.id] || maxDiscount) : 0;
     setCartCount((prev) => prev + 1);
     const salePrice = campaign.isActive
-      ? Math.round(product.regularPrice * (1 - discountRate / 100))
+      ? Math.round(product.regularPrice * (1 - itemDiscount / 100))
       : product.regularPrice;
 
-    setCheckoutModal({ ...product, salePrice });
+    setCheckoutModal({ ...product, salePrice, itemDiscount });
     confetti({ particleCount: 90, spread: 70, origin: { y: 0.7 } });
   };
 
@@ -220,7 +227,7 @@ export const DemoStorePage = () => {
       {campaign.isActive && (
         <div className="w-full bg-gradient-to-r from-amber-500 via-rose-500 to-purple-600 text-black px-4 py-2 font-mono text-xs font-black flex items-center justify-center gap-3 shadow-xl tracking-wider uppercase">
           <Zap className="w-4 h-4 fill-current text-black animate-bounce" />
-          <span>FESTIVE SPECIAL OFFER: FLAT {discountRate}% OFF STOREWIDE</span>
+          <span>FESTIVE SPECIAL OFFER: UP TO {maxDiscount}% OFF ACROSS ALL TECH CATEGORIES</span>
           <span className="bg-black/20 px-2.5 py-0.5 rounded text-[10px] text-white">COUPON: {campaign.promoCode}</span>
         </div>
       )}
@@ -239,7 +246,7 @@ export const DemoStorePage = () => {
             <div className="space-y-4 max-w-2xl relative z-10">
               <div className={`inline-flex items-center gap-2 px-3.5 py-1 rounded-full ${theme.accentBadge} text-xs font-mono font-bold`}>
                 <Sparkles className="w-4 h-4 text-amber-400 animate-spin" />
-                {theme.festiveTag} • {discountRate}% OFF CATALOG
+                {theme.festiveTag} • UP TO {maxDiscount}% OFF CATALOG
               </div>
 
               <h1 className={`text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r ${theme.titleGradient} tracking-tight leading-tight`}>
@@ -247,7 +254,7 @@ export const DemoStorePage = () => {
               </h1>
 
               <p className="text-sm md:text-base text-slate-200 leading-relaxed font-sans">
-                {campaign.bannerText || `Special Celebration • Enjoy ${discountRate}% Off Across All Categories!`}
+                {campaign.bannerText || `Special Celebration • Enjoy Up To ${maxDiscount}% Off Across All Categories!`}
               </p>
 
               <div className="flex flex-wrap items-center gap-4 pt-2">
@@ -255,7 +262,7 @@ export const DemoStorePage = () => {
                   APPLY PROMO CODE: <span className="font-extrabold text-white text-sm ml-1">{campaign.promoCode}</span>
                 </div>
                 <div className="px-4 py-2 rounded-xl bg-slate-950/80 border border-slate-800 text-xs font-mono text-cyan-300">
-                  LIMITED TIME: <span className="font-bold text-white">VALID THIS WEEK</span>
+                  DYNAMIC MARKET PRICING: <span className="font-bold text-white">ACTIVE</span>
                 </div>
               </div>
             </div>
@@ -265,8 +272,8 @@ export const DemoStorePage = () => {
               <div className="w-40 h-40 rounded-full bg-gradient-to-tr from-amber-500 to-rose-500 blur-2xl opacity-40 animate-pulse-glow absolute" />
               <div className={`w-36 h-36 rounded-3xl glass-panel-glow border ${theme.borderColor} flex flex-col items-center justify-center p-4 text-center relative z-10 shadow-2xl`}>
                 <span className="text-4xl mb-1">{theme.emoji}</span>
-                <span className="text-xs font-mono font-bold text-amber-300">FESTIVE DISCOUNT</span>
-                <span className="text-2xl font-black text-white">{discountRate}% OFF</span>
+                <span className="text-xs font-mono font-bold text-amber-300">VARIABLE SAVINGS</span>
+                <span className="text-2xl font-black text-white">UP TO {maxDiscount}% OFF</span>
               </div>
             </div>
           </motion.div>
@@ -297,15 +304,16 @@ export const DemoStorePage = () => {
         <div className="flex items-center justify-between mb-8 border-b border-slate-800 pb-4">
           <div>
             <h2 className="text-xl font-extrabold text-white">Featured Catalog</h2>
-            <p className="text-xs text-slate-400 font-mono">Live dynamic catalog pricing</p>
+            <p className="text-xs text-slate-400 font-mono">Live dynamic per-product market pricing</p>
           </div>
           <span className="text-xs font-mono text-cyan-400">{products.length} ITEMS AVAILABLE</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {products.map((product) => {
+            const itemDiscount = campaign.isActive ? (productDiscounts[product.id] || maxDiscount) : 0;
             const salePrice = campaign.isActive
-              ? Math.round(product.regularPrice * (1 - discountRate / 100))
+              ? Math.round(product.regularPrice * (1 - itemDiscount / 100))
               : product.regularPrice;
 
             return (
@@ -327,7 +335,7 @@ export const DemoStorePage = () => {
                   {campaign.isActive && (
                     <span className={`absolute top-3 left-3 ${theme.buttonGradient} text-[10px] font-black uppercase px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1`}>
                       <Tag className="w-3 h-3" />
-                      {discountRate}% OFF
+                      {itemDiscount}% OFF
                     </span>
                   )}
                   <span className="absolute top-3 right-3 bg-slate-950/80 backdrop-blur-md text-slate-300 text-[10px] font-mono px-2 py-0.5 rounded border border-white/10">
@@ -359,7 +367,7 @@ export const DemoStorePage = () => {
                     }`}
                   >
                     <ShoppingCart className="w-3.5 h-3.5" />
-                    <span>{campaign.isActive ? 'Buy with Festival Discount' : 'Add to Cart'}</span>
+                    <span>{campaign.isActive ? `Buy with ${itemDiscount}% Off` : 'Add to Cart'}</span>
                   </button>
                 </div>
               </motion.div>
@@ -388,7 +396,7 @@ export const DemoStorePage = () => {
               </p>
               {campaign.isActive && (
                 <div className={`p-3 rounded-xl ${theme.accentBadge} text-[11px] font-mono`}>
-                  Applied Coupon {campaign.promoCode} ({discountRate}% Discount)!
+                  Applied Coupon {campaign.promoCode} ({checkoutModal.itemDiscount}% Discount)!
                 </div>
               )}
               <button
