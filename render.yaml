@@ -1,0 +1,25 @@
+services:
+  # Animated Website Frontend (Static Site)
+  - type: static
+    name: my-animated-website
+    env: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  # ShadowBoard AI Backend API (Node Web Service)
+  - type: web
+    name: shadowboard-backend-api
+    env: node
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: PORT
+        value: 5001
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
